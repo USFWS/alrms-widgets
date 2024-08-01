@@ -1,0 +1,22 @@
+{
+  "name": "query-dropdowns",
+  "label": "Query Dropdowns",
+  "type": "widget",
+  "version": "1.12.0",
+  "exbVersion": "1.12.0",
+  "author": "Geographic Information Network of Alaska",
+  "description": "Allows user to set query parameters for pre-processed datasets for the FWS ALRMS Web Application.",
+  "copyright": "Geographic Information Network of Alaska",
+  "dependency": [
+    "jimu-arcgis"
+  ],
+  "license": "http://www.apache.org/licenses/LICENSE-2.0",
+  "properties": {},
+  "translatedLocales": [
+    "en"
+  ],
+  "defaultSize": {
+    "width": 800,
+    "height": 500
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "DataSources": {
+    "MODIS NDVI": {
+      "variables": [
+        "Duration of greenness",
+        "End of greenness",
+        "Onset of Greenness"
+      ]
+    },
+    "MODIS Snow": {
+      "variables": ["first_snow_day", "last_snow_day"]
+    }
+  },
+  "AllowedCombinations": {
+    "Duration of greenness": {
+      "MODIS NDVI": ["End of greenness", "Onset of Greenness"],
+      "MODIS Snow": ["first_snow_day", "last_snow_day"]
+    },
+    "End of greenness": {
+      "MODIS NDVI": ["Duration of greenness", "Onset of Greenness"],
+      "MODIS Snow": ["first_snow_day", "last_snow_day"]
+    },
+    "Onset of Greenness": {
+      "MODIS NDVI": ["Duration of greenness", "End of greenness"],
+      "MODIS Snow": ["first_snow_day", "last_snow_day"]
+    },
+    "first_snow_day": {
+      "MODIS NDVI": [
+        "Duration of greenness",
+        "End of greenness",
+        "Onset of Greenness"
+      ],
+      "MODIS Snow": ["last_snow_day"]
+    },
+    "last_snow_day": {
+      "MODIS NDVI": [
+        "Duration of greenness",
+        "End of greenness",
+        "Onset of Greenness"
+      ],
+      "MODIS Snow": ["first_snow_day"]
+    }
+  }
+}
