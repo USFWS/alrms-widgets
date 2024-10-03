@@ -1,0 +1,17 @@
+{
+  "DataSources": {
+    "NDVI": {
+      "variables": [
+        "Duration of greenness",
+        "End of greenness",
+        "Onset of greenness"
+      ]
+    },
+    "MODIS": {
+      "variables": ["first_snow_day", "last_snow_day"]
+    }
+  },
+  "AllowedCombinations": {
+    "Duration_of_Greenness": ["first_snow_day", "last_snow_day"]
+  }
+}
