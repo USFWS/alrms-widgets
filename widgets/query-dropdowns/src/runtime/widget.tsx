@@ -17,11 +17,12 @@ import ZoneDropdown from "./ZoneDropdown";
 import ZoneSubsetSelect from "./ZoneSubsetSelect";
 import DataSourceDropdown from "./DataSourceDropdown";
 import YearSlider from "./YearSlider";
-//import DrawTool from "./DrawTool";
+import DrawTool from "./DrawTool";
+import ZoneSubsetGeo from "./ZoneSubsetGeo";
 import { loadArcGISJSAPIModules } from "jimu-arcgis";
 
 export default function Widget(props: AllWidgetProps<IMConfig>) {
-  console.log(props);
+  console.log("Props:", props);
 
   const [jmv, setJmv] = React.useState<JimuMapView | null>(null);
   const [zone, setZone] = React.useState({
@@ -36,7 +37,12 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
       },
     ],
   });
-  const [zoneSubset, setZoneSubset] = React.useState([]);
+  const [zoneSubsets, setZoneSubsets] = React.useState([
+    {
+      groupId: 1,
+      polygons: [],
+    },
+  ]);
   const [var1, setVar1] = React.useState("");
   const [var2Options, setvar2Options] = React.useState([]);
   const [var2, setVar2] = React.useState("");
@@ -53,6 +59,7 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
     max: Math.max(...yearRange),
   });
   const [tableQuery, setTableQuery] = React.useState([]);
+  const [zoneSubsetGroups, setZoneSubsetGroups] = React.useState(["Group 1"]);
   //Set up widget with map and map layers
   const activeViewChangeHandler = (jmv: JimuMapView) => {
     if (jmv && jmv.view.map) {
@@ -64,16 +71,15 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
       setJmv(jmv);
     }
   };
+  console.log(zoneSubsets);
 
   React.useEffect(() => {
     props.dispatch(
       appActions.widgetStatePropChange("widget_comms", "dataTable", dataTable)
     );
   }, [dataTable]);
-
-  //const [activeLayer, setActiveLayer] = React.useState(null);
-  //console.log(zoneSubset);
-  const zoneSubsetRef = React.useRef(zoneSubset);
+  /*
+  //const zoneSubsetRef = React.useRef(zoneSubset);
 
   React.useEffect(() => {
     if (jmv && zone) {
@@ -82,9 +88,10 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
       highlightZones(zoneSubset.map((zone) => zone.value));
     }
   }, [zoneSubset]);
+
   function handleMapZoneClick(attributes) {
     const newZone = {
-      label: attributes.name,
+      label: attributes.name || attributes.zone_name,
       value: attributes.zone_name,
       objectid: attributes.objectid,
     };
@@ -124,6 +131,7 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
     let clickHandler;
     let onClick;
     async function setupLayerView(jmv, activeLayer) {
+      console.log(jmv, activeLayer);
       if (jmv && activeLayer) {
         const layerView = await jmv.view.whenLayerView(activeLayer);
 
@@ -162,7 +170,7 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
         onClick.remove();
       }
     };
-  }, [jmv, zone]);
+  }, [jmv, zone]); */
 
   function convertToUTC(timeEpoch) {
     var d = new Date(timeEpoch);
@@ -239,29 +247,37 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
 
   React.useEffect(() => {
     if (zone.dataset && dataSource.source && var1) {
-      console.log(zoneSubset);
-      //const zoneSubsetString = zoneSubset.map((zone) => zone.name);
-      const zoneSubsetString = zoneSubset
-        .map((id) => `'${id.value}'`)
-        .join(", ");
-      if (plotType == 0) {
-        //const query = `zone_name IN ('inn', 'ykf') AND variable = 'first_snow_day' AND stdtime >= date '2001-01-01' AND stdtime <= date '2020-01-01'`;
-        //zone_name IN "'Innoko, Kanuti, Yukon Flats'" AND
-        //const query = `zone_name IN (${zoneSubsetString}) AND variable = '${var1}' AND stdtime >= date '${yearValues.min}-01-01' AND stdtime <= date '${yearValues.max}-01-01'`;
-        const query = `zone_name IN (${zoneSubsetString}) AND variable = '${var1}' AND stdtime >= date '${yearValues.min}-01-01' AND stdtime <= date '${yearValues.max}-01-01'`;
-        console.log("setting query");
-        setTableQuery([query]);
-      } else if (plotType == 1) {
-        const query1 = `zone_name IN (${zoneSubsetString}) AND variable = '${var1}' AND stdtime >= date '${yearValues.min}-01-01' AND stdtime <= date '${yearValues.max}-01-01'`;
-        const query2 = `zone_name IN (${zoneSubsetString}) AND variable = '${
-          var2.split(": ")[1]
-        }' AND stdtime >= date '${yearValues.min}-01-01' AND stdtime <= date '${
-          yearValues.max
-        }-01-01'`;
-        setTableQuery([query1, query2]);
+      console.log(zoneSubsets);
+      const tableQueries = [];
+      for (let i = 0; i < zoneSubsets.length; i++) {
+        console.log(zoneSubsets[i].polygons);
+        const zoneSubsetString = zoneSubsets[i].polygons
+          .map((id) => `'${id.value}'`)
+          .join(", ");
+        if (plotType == 0) {
+          //const query = `zone_name IN ('inn', 'ykf') AND variable = 'first_snow_day' AND stdtime >= date '2001-01-01' AND stdtime <= date '2020-01-01'`;
+          //zone_name IN "'Innoko, Kanuti, Yukon Flats'" AND
+          //const query = `zone_name IN (${zoneSubsetString}) AND variable = '${var1}' AND stdtime >= date '${yearValues.min}-01-01' AND stdtime <= date '${yearValues.max}-01-01'`;
+          const query = `zone_name IN (${zoneSubsetString}) AND variable = '${var1}' AND stdtime >= date '${yearValues.min}-01-01' AND stdtime <= date '${yearValues.max}-01-01'`;
+          console.log("setting query");
+          tableQueries.push(query);
+          //setTableQuery([query]);
+        } else if (plotType == 1) {
+          const query1 = `zone_name IN (${zoneSubsetString}) AND variable = '${var1}' AND stdtime >= date '${yearValues.min}-01-01' AND stdtime <= date '${yearValues.max}-01-01'`;
+          const query2 = `zone_name IN (${zoneSubsetString}) AND variable = '${
+            var2.split(": ")[1]
+          }' AND stdtime >= date '${
+            yearValues.min
+          }-01-01' AND stdtime <= date '${yearValues.max}-01-01'`;
+          tableQueries.push([query1, query2]);
+          //setTableQuery([query1, query2]);
+        }
       }
+      console.log(tableQueries);
+      setTableQuery(tableQueries);
+      //const zoneSubsetString = zoneSubset.map((zone) => zone.name);
     }
-  }, [zone, dataSource, zoneSubset, plotType, var1, var2, yearValues]);
+  }, [zone, dataSource, zoneSubsets, plotType, var1, var2, yearValues]);
 
   async function dispatchTable() {
     async function loadTableStructure(table, queryString) {
@@ -274,6 +290,7 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
           query.where = queryString;
           console.log(queryString);
           const queryResults = await table.queryFeatures(query);
+          console.log(queryResults);
           //const csvString = convertFeaturesToCSV(queryResults.features);
           return queryResults.features.map((feature) => feature.attributes);
         }
@@ -281,7 +298,6 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
         console.error("Error loading table:", error);
       }
     }
-
     if (plotType === 0) {
       if (zone.dataset && dataSource.source && var1) {
         const table = zone.tables.filter((table) =>
@@ -292,6 +308,7 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
             table,
             tableQuery[0]
           );
+          console.log(dataTableResult);
           setDataTable([dataTableResult]);
         } else {
           console.error("No matching table found.");
@@ -333,51 +350,91 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
       console.log("already selected");
       return;
     }
+    if (zone.dataset) {
+      zone.dataset.visible = false;
+    }
+
     let polygonItems: { label: string; value: string; objectid: number }[];
     console.log("querying zone tables");
     const query = layerItem.createQuery();
-    query.outFields = ["name, zone_name, objectid"];
     query.returnGeometry = false;
-    layerItem.queryFeatures(query).then(function (results) {
-      console.log(results);
-      polygonItems = Array.isArray(results.features)
-        ? [
-            { label: "Select All", value: "select_all", objectid: null },
-            ...results.features.map((feature) => ({
-              label: feature.attributes.name || "Unnamed Polygon",
-              value: feature.attributes.zone_name || "No Code",
-              objectid: feature.attributes.objectid || 0,
-            })),
-          ]
-        : [];
-      if (zone.dataset) {
-        zone.dataset.visible = false;
-      }
-      setZone({
-        dataset: layerItem,
-        title: layerItem.title.split(" - ")[1],
-        tables: jmv.view.map.tables.items.filter(
-          (item) => item.url === layerItem.url
-        ),
-        polygons: polygonItems,
-      });
 
-      console.log(polygonItems);
-      setZoneSubset(polygonItems.filter((poly) => poly.value !== "select_all"));
-    });
+    const tryQuery = (query) => {
+      query.outFields = ["name, zone_name, objectid"];
+      return layerItem
+        .queryFeatures(query)
+        .then(function (results) {
+          console.log(results);
+          return results;
+        })
+        .catch((e) => {
+          console.log(e);
+          query.outFields = ["zone_name, objectid"];
+          return layerItem
+            .queryFeatures(query)
+            .then(function (results) {
+              console.log(results);
+              return results;
+            })
+            .catch((e) => {
+              console.log(e);
+              throw e;
+            });
+        });
+    };
+    //query.outFields = ["name, zone_name, objectid"];
+
+    //layerItem
+    //  .queryFeatures(query)
+    //  .then(function (results) {
+    tryQuery(query)
+      .then((results) => {
+        console.log(results);
+        console.log(results.features.length);
+        if (results.features.length < 2000) {
+          polygonItems = Array.isArray(results.features)
+            ? [
+                { label: "Select All", value: "select_all", objectid: null },
+                ...results.features.map((feature) => ({
+                  label:
+                    feature.attributes.name ||
+                    feature.attributes.zone_name ||
+                    "Unnamed Polygon",
+                  value: feature.attributes.zone_name || "No Code",
+                  objectid: feature.attributes.objectid || 0,
+                })),
+              ]
+            : [];
+
+          setZone({
+            dataset: layerItem,
+            title: layerItem.title.split(" - ")[1],
+            tables: jmv.view.map.tables.items.filter(
+              (item) => item.url === layerItem.url
+            ),
+            polygons: polygonItems,
+          });
+          console.log(polygonItems);
+          /*           setZoneSubset(
+            polygonItems.filter((poly) => poly.value !== "select_all")
+          ); */
+        } else {
+          setZone({
+            dataset: layerItem,
+            title: layerItem.title.split(" - ")[1],
+            tables: jmv.view.map.tables.items.filter(
+              (item) => item.url === layerItem.url
+            ),
+            polygons: [],
+          });
+          /*           setZoneSubset([]); */
+        }
+      })
+      .catch((error) => {
+        console.log("Query Error:", error);
+      });
     layerItem.visible = true;
     layerItem.outFields = ["*"];
-    // loadArcGISJSAPIModules(["esri/layers/FeatureLayer"]).then(
-    //   ([FeatureLayer]) => {
-    //     const featureLayer = new FeatureLayer({
-    //       layerItem,
-    //     });
-    //     console.log(featureLayer.declaredClass);
-    //     setActiveLayer(layerItem);
-    //   }
-    // );
-    // console.log(polygonItems);
-    // highlightZones(polygonItems.map((poly) => poly.value));
   }
   const highlightedRef = React.useRef(null);
   const highlightZones = async (zone_name) => {
@@ -392,51 +449,48 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
 
     console.log(highlightedRef);
     console.log(objectIds);
-    console.log(zoneSubset);
+    console.log(zoneSubsets);
     if (highlightedRef.current) {
       highlightedRef.current.remove();
     }
     highlightedRef.current = layerView.highlight(objectIds);
+    console.log(highlightedRef);
   };
-  function handleZoneSubsetClick(allItems) {
+  function handleZoneSubsetClick(allItems, group_id) {
     console.log(allItems);
-    console.log([...allItems.filter((poly) => poly.value !== "select_all")]);
-    setZoneSubset([...allItems.filter((poly) => poly.value !== "select_all")]);
-    //highlightZones(allItems.map((item) => item.value));
+    const newPolys = [
+      ...allItems.filter((poly) => poly.value !== "select_all"),
+    ];
+    console.log(newPolys);
+    console.log(zoneSubsets);
+    setZoneSubsets((prevGroups) =>
+      prevGroups.map((group) =>
+        group.groupId === group_id
+          ? { ...group, polygons: newPolys } // Add newPolygon to the existing polygons
+          : group
+      )
+    );
   }
 
-  // function handleZoneSubsetClick(item, allItems) {
-  //   if (item && item.value === "select_all") {
-  //     const allValues = allItems
-  //       .filter((i) => i.value !== "select_all")
-  //       .map((i) => i.value);
-  //     setZoneSubset([...allValues]);
-  //   } else if (!item) {
-  //     // Handle the case where all items are unselected
-  //     setZoneSubset([]);
-  //   } else {
-  //     setZoneSubset([...allItems]);
-  //   }
-  // }
   function handleVar1Click(variable) {
     console.log(variable);
     const formattedVariable = variable.replace(/\s+/g, "_");
     //console.log(formattedVariable);
     console.log(props.config.AllowedCombinations);
     setVar1(variable);
-    loadArcGISJSAPIModules(["esri/layers/ImageryLayer"]).then(
-      ([ImageryLayer]) => {
-        const imageryLayer = new ImageryLayer({
-          //url: "https://sampleserver6.arcgisonline.com/arcgis/rest/services/NLCDLandCover2001/ImageServer",
-          url: "https://gis.fws.gov/image/rest/services/NDVI_Value_of_Onset_of_Greenness/ImageServer",
-          //portalItem: "de283b79dfc84d7388a72af64ecd5bdc",
-        });
-        console.log(imageryLayer);
-        console.log(imageryLayer.declaredClass);
-        imageryLayer.visible = true;
-        jmv.view.map.add(imageryLayer);
-      }
-    );
+    //loadArcGISJSAPIModules(["esri/layers/ImageryLayer"]).then(
+    //  ([ImageryLayer]) => {
+    //    const imageryLayer = new ImageryLayer({
+    //url: "https://sampleserver6.arcgisonline.com/arcgis/rest/services/NLCDLandCover2001/ImageServer",
+    //      url: "https://gis.fws.gov/image/rest/services/ALRMS/MODIS_Snow/ImageServer",
+    //portalItem: "de283b79dfc84d7388a72af64ecd5bdc",
+    //    });
+    //    console.log(imageryLayer);
+    //    console.log(imageryLayer.declaredClass);
+    //    imageryLayer.visible = true;
+    //    jmv.view.map.add(imageryLayer);
+    //  }
+    //);
     setvar2Options(props.config.AllowedCombinations[variable].asMutable());
     //var2 && setVar2("");
     //var2 && console.log(var2);
@@ -520,7 +574,7 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
         </DropdownMenu>
       </Dropdown>
 
-      {/* <DrawTool
+      {/*       <DrawTool
         jmv={jmv}
         activeLayer={zone.dataset}
         handleDraw={handleZoneSubsetClick}
@@ -532,12 +586,65 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
         <Dropdown className="dropdown">
           <DropdownButton disabled={true}>Select Zone Dataset</DropdownButton>
         </Dropdown>
+      ) : zone.polygons.length > 0 ? (
+        <>
+          {zoneSubsets.map((group) => {
+            return (
+              <div>
+                <p>Group {group.groupId}</p>
+                <ZoneSubsetSelect
+                  group={group.groupId}
+                  polygons={zone.polygons}
+                  selectedZones={group.polygons}
+                  handleZoneSubsetClick={handleZoneSubsetClick}
+                  jmv={jmv}
+                  activeLayer={zone.dataset}
+                  theme={props.theme}
+                />
+              </div>
+            );
+          })}
+          <div style={{ display: "flex", fontSize: "2px" }}>
+            <Button
+              onClick={() => {
+                setZoneSubsets((prevGroups) => [
+                  ...prevGroups,
+                  { groupId: prevGroups.length + 1, polygons: [] },
+                ]);
+              }}
+            >
+              Add Group
+            </Button>
+            <Button
+              disabled={zoneSubsets.length < 2}
+              onClick={() => {
+                const newGroup = zoneSubsetGroups.length;
+                console.log(newGroup);
+                setZoneSubsets((prevGroups) =>
+                  prevGroups.filter((group) => group.groupId !== newGroup)
+                );
+              }}
+            >
+              Delete Group
+            </Button>
+          </div>
+        </>
       ) : (
-        <ZoneSubsetSelect
-          polygons={zone.polygons}
-          selectedZones={zoneSubset}
-          handleZoneSubsetClick={handleZoneSubsetClick}
-        />
+        zoneSubsetGroups.map((group) => {
+          return (
+            <>
+              <p>{group}</p>
+              <ZoneSubsetGeo
+                jmv={jmv}
+                activeLayer={zone.dataset}
+                handleDraw={() => {
+                  console.log("Handle Dt=raw");
+                }}
+                theme={props.theme}
+              />
+            </>
+          );
+        })
       )}
 
       <h3>Primary Data Source</h3>
