@@ -50,7 +50,6 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
     source: "",
     variables: [],
   });
-  console.log(dataSource);
   const [dataTable, setDataTable] = React.useState([]);
   const [plotType, setPlotType] = React.useState(0);
   const [yearRange, setYearRange] = React.useState([2000, 2025]);
@@ -72,23 +71,33 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
     }
   };
   console.log(zoneSubsets);
+  console.log(tableQuery);
+  console.log(dataTable);
 
   React.useEffect(() => {
     props.dispatch(
       appActions.widgetStatePropChange("widget_comms", "dataTable", dataTable)
     );
   }, [dataTable]);
-  /*
-  //const zoneSubsetRef = React.useRef(zoneSubset);
+
+  const zoneSubsetRef = React.useRef(zoneSubsets);
 
   React.useEffect(() => {
     if (jmv && zone) {
-      zoneSubsetRef.current = zoneSubset;
-      console.log("zoneSubset changed", zoneSubset);
-      highlightZones(zoneSubset.map((zone) => zone.value));
-    }
-  }, [zoneSubset]);
+      zoneSubsetRef.current = zoneSubsets;
+      console.log("zoneSubsets changed", zoneSubsets);
+      highlightZones(
+        zoneSubsets.reduce((acc, group) => {
+          acc[group.groupId] = acc[group.groupId] || [];
+          const oids = group.polygons.map((polygon) => polygon.objectid);
+          acc[group.groupId].push(...oids);
 
+          return acc;
+        }, {})
+      );
+    }
+  }, [zoneSubsets]);
+  /*
   function handleMapZoneClick(attributes) {
     const newZone = {
       label: attributes.name || attributes.zone_name,
@@ -304,6 +313,15 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
           table.title.includes(dataSource.source.split(" ")[1])
         )[0];
         if (table) {
+          const dataTableResults = await Promise.all(
+            tableQuery.map(async (query) => {
+              const dataTableResult = await loadTableStructure(table, query);
+              console.log(dataTableResult); // Log each result as it's loaded
+              return dataTableResult; // Return to populate dataTableResults
+            })
+          );
+          //console.log(dataTableResult);
+          setDataTable([dataTableResults]);
           const dataTableResult = await loadTableStructure(
             table,
             tableQuery[0]
@@ -438,26 +456,141 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
   }
   const highlightedRef = React.useRef(null);
   const highlightZones = async (zone_name) => {
-    const layerView = await jmv.view.whenLayerView(zone.dataset);
     console.log(zone_name);
-    console.log(zone.polygons);
-    const objectIds = zone.polygons
-      .filter(
-        (poly) => zone_name.includes(poly.value) && poly.value !== "select_all"
-      )
-      .map((poly) => poly.objectid);
+    //const OIDSubsetString = zone_name.map((id) => `${id}`).join(", ");
+    let OIDSubsetString;
+    console.log(OIDSubsetString);
 
-    console.log(highlightedRef);
-    console.log(objectIds);
-    console.log(zoneSubsets);
-    if (highlightedRef.current) {
-      highlightedRef.current.remove();
+    async function fetchGeometries(layer, oidString) {
+      const layerView = await jmv.view.whenLayerView(layer);
+      const query = {
+        where: `objectid IN (${oidString})`,
+        outFields: ["objectid"],
+        returnGeometry: true,
+      };
+      const results = await layerView.layer.queryFeatures(query);
+      console.log(results);
+      return results.features.map((feat) => ({
+        oid: feat.attributes.objectid,
+        geom: feat.geometry,
+      }));
     }
-    highlightedRef.current = layerView.highlight(objectIds);
-    console.log(highlightedRef);
+    const fetchGeometriesForGroups = async () => {
+      const geometriesByGroupId = {};
+
+      await Promise.all(
+        Object.keys(zone_name).map(async (group) => {
+          const OIDSubsetString = zone_name[group]
+            .map((id) => `${id}`)
+            .join(", ");
+          const geometries = await fetchGeometries(
+            zone.dataset,
+            OIDSubsetString
+          );
+
+          // Ensure the group ID is a number or convert it appropriately
+          const groupId = parseInt(group, 10);
+
+          // Initialize the array if it doesn't exist
+          if (!geometriesByGroupId[groupId]) {
+            geometriesByGroupId[groupId] = [];
+          }
+
+          // Push the fetched geometries into the respective group array
+          geometriesByGroupId[groupId].push(...geometries);
+        })
+      );
+
+      return geometriesByGroupId; // This will log the dictionary with group IDs and their corresponding geometries
+    };
+
+    // Call the function to execute
+    //fetchGeometriesForGroups();
+
+    // Call the function to execute
+    const geoms = await fetchGeometriesForGroups();
+
+    console.log(geoms);
+
+    function getColorByGroupId(groupId) {
+      // Assign colors based on groupId; this is just an example
+      switch (groupId) {
+        case 1:
+          return [255, 0, 0, 1]; // Red
+        case 2:
+          return [0, 255, 0, 1]; // Green
+        case 3:
+          return [0, 0, 255, 1]; // Blue
+        default:
+          return [255, 255, 0, 1]; // Default yellow
+      }
+    }
+
+    loadArcGISJSAPIModules(["esri/layers/GraphicsLayer", "esri/Graphic"]).then(
+      async ([GraphicsLayer, Graphic]) => {
+        // Ensure the function is async for await
+        // Iterate over each group in geoms
+        for (const groupId of Object.keys(geoms)) {
+          const color = getColorByGroupId(parseInt(groupId, 10)); // Get color for the current group
+
+          const groupLayer = new GraphicsLayer({
+            title: `Group ${groupId}`,
+            id: `groupLayer-${groupId}`,
+          });
+          jmv.view.map.add(groupLayer);
+
+          // Create graphics for each polygon in the group
+          const graphics = await Promise.all(
+            geoms[groupId].map((polygon) => {
+              return new Graphic({
+                geometry: polygon.geom, // Use the geometry from the polygon object
+                symbol: {
+                  type: "simple-fill",
+                  color: color,
+                  style: "solid",
+                  outline: {
+                    color: [255, 255, 255],
+                    width: 1,
+                  },
+                },
+                attributes: { oid: polygon.oid }, // Store the oid in attributes
+              });
+            })
+          );
+
+          // Add graphics to the group's GraphicsLayer
+          groupLayer.addMany(graphics);
+        }
+      }
+    );
+
+    //console.log(zone_name);
+    //layerView.highlightOptions = {
+    //  color: getColorByGroupId(zone_name[0].groupId),
+    //};
+
+    //console.log(zone.polygons);
+    //const objectIds = zone.polygons
+    //  .filter(
+    //    (poly) => zone_name.includes(poly.value) && poly.value !== "select_all"
+    //  )
+    //  .map((poly) => poly.objectid);
+
+    //console.log(highlightedRef);
+    //console.log(zone_name.map((polygon) => polygon.oid));
+    //console.log(zoneSubsets);
+    //if (highlightedRef.current) {
+    //  highlightedRef.current.remove();
+    //}
+    //highlightedRef.current = layerView.highlight(
+    //  zone_name.map((polygon) => polygon.oid)
+    //);
+
+    //console.log(highlightedRef);
   };
   function handleZoneSubsetClick(allItems, group_id) {
     console.log(allItems);
+    console.log(group_id);
     const newPolys = [
       ...allItems.filter((poly) => poly.value !== "select_all"),
     ];
@@ -618,7 +751,7 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
             <Button
               disabled={zoneSubsets.length < 2}
               onClick={() => {
-                const newGroup = zoneSubsetGroups.length;
+                const newGroup = zoneSubsets.length;
                 console.log(newGroup);
                 setZoneSubsets((prevGroups) =>
                   prevGroups.filter((group) => group.groupId !== newGroup)
@@ -630,17 +763,16 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
           </div>
         </>
       ) : (
-        zoneSubsetGroups.map((group) => {
+        zoneSubsets.map((group) => {
           return (
             <>
-              <p>{group}</p>
+              <p>Group {group.groupId}</p>
               <ZoneSubsetGeo
                 jmv={jmv}
                 activeLayer={zone.dataset}
-                handleDraw={() => {
-                  console.log("Handle Dt=raw");
-                }}
+                handleDraw={handleZoneSubsetClick}
                 theme={props.theme}
+                group_id={group.groupId}
               />
             </>
           );

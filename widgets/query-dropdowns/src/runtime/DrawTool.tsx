@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { loadArcGISJSAPIModules } from "jimu-arcgis";
 
-const SketchWidget = ({ jmv, activeLayer, handleDraw, theme }) => {
+const SketchWidget = ({ jmv, activeLayer, handleDraw, theme, group_id }) => {
   const sketchRef = useRef(null);
   const sketchViewModelRef = useRef(null);
   const graphicsLayerRef = useRef(null);
@@ -115,7 +115,7 @@ const SketchWidget = ({ jmv, activeLayer, handleDraw, theme }) => {
               }));
 
               console.log(newZones);
-              handleDraw(newZones);
+              handleDraw(newZones, group_id);
             }
 
             await queryFeaturelayer(geometry);

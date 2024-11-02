@@ -38,6 +38,16 @@ export default function ZoneSubsetSelect({
    */
   function handleClick(selections) {
     console.log(selections);
+    if (selections) {
+      selections = selections.map((item) => {
+        const match = polygons.find((refItem) => refItem.value == item.value);
+        const updatedItem = match
+          ? { ...item, objectid: match.objectid }
+          : item;
+        const { render, ...itemWithoutRender } = updatedItem;
+        return itemWithoutRender;
+      });
+    }
 
     // If no items are selected, an empty array is passed to the callback.
     if (!selections) {
@@ -98,6 +108,7 @@ export default function ZoneSubsetSelect({
         activeLayer={activeLayer}
         handleDraw={handleZoneSubsetClick}
         theme={theme}
+        group_id={group}
       ></DrawTool>
     </div>
   );
