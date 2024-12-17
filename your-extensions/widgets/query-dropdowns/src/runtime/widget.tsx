@@ -26,6 +26,7 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
   //console.log("Props:", props);
 
   const [jmv, setJmv] = React.useState<JimuMapView | null>(null);
+  const [initialZones, setInitialZones] = React.useState([]);
   const [zone, setZone] = React.useState({
     dataset: null,
     title: "",
@@ -70,10 +71,11 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
       //  fillOpacity: 0.2,
       //};
       setJmv(jmv);
+      setInitialZones(
+        jmv?.view.map.layers.items.filter((item) => item.type == "feature")
+      );
     }
   };
-  console.log(jmv?.view.map.layers.items);
-  //console.log(jmv?.view.map.layers);
   //console.log(zoneSubsets);
   //console.log(tableQuery);
   console.log(dataTable);
@@ -703,7 +705,7 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
         </DropdownButton>
         <DropdownMenu>
           <ZoneDropdown
-            zones={jmv?.view.map.layers.items}
+            zones={initialZones}
             handleZoneClick={handleZoneClick}
           />
         </DropdownMenu>
