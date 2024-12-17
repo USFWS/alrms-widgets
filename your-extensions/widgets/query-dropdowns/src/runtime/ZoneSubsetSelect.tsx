@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { MultiSelect, AdvancedSelect } from "jimu-ui";
+import DrawTool from "./DrawTool";
 
 /**
  * ZoneSubsetSelect component renders a dropdown list to select zones and
@@ -11,12 +12,19 @@ import { MultiSelect, AdvancedSelect } from "jimu-ui";
  * when the selection changes.
  */
 export default function ZoneSubsetSelect({
+  group,
   selectedZones,
   polygons = [],
   handleZoneSubsetClick,
+  jmv,
+  activeLayer,
+  theme,
 }) {
   // The key is used to force a re-render when the polygons change.
   const [key, setKey] = useState(Date.now());
+
+  console.log(polygons);
+  console.log(selectedZones);
 
   // When the polygons change, the key is updated to trigger a re-render.
   useEffect(() => {
@@ -30,19 +38,29 @@ export default function ZoneSubsetSelect({
    */
   function handleClick(selections) {
     console.log(selections);
+    if (selections) {
+      selections = selections.map((item) => {
+        const match = polygons.find((refItem) => refItem.value == item.value);
+        const updatedItem = match
+          ? { ...item, objectid: match.objectid }
+          : item;
+        const { render, ...itemWithoutRender } = updatedItem;
+        return itemWithoutRender;
+      });
+    }
 
     // If no items are selected, an empty array is passed to the callback.
     if (!selections) {
-      handleZoneSubsetClick([]);
+      handleZoneSubsetClick([], group);
     }
     // If "select_all" is selected, all polygons are passed to the callback.
     else if (selections.some((items) => items.value == "select_all")) {
       console.log("selecting all");
-      handleZoneSubsetClick(polygons);
+      handleZoneSubsetClick(polygons, group);
     }
     // If other items are selected, they are passed to the callback.
     else if (selections.length) {
-      handleZoneSubsetClick(selections);
+      handleZoneSubsetClick(selections, group);
     }
   }
 
@@ -72,17 +90,26 @@ export default function ZoneSubsetSelect({
 
   // The AdvancedSelect component is rendered with the provided props.
   return (
-    <AdvancedSelect
-      key={key}
-      staticValues={polygons}
-      selectedValues={selectedZones}
-      placeholder="please select"
-      onChange={handleClick}
-      isMultiple={true}
-      hideBottomTools={false}
-      hideSearchInput={false}
-      sortValuesByLabel={false}
-      customDropdownButtonContent={customDropdownButtonContent}
-    />
+    <div style={{ display: "flex", width: "90%" }}>
+      <AdvancedSelect
+        key={key}
+        staticValues={polygons}
+        selectedValues={selectedZones}
+        placeholder="please select"
+        onChange={handleClick}
+        isMultiple={true}
+        hideBottomTools={false}
+        hideSearchInput={false}
+        sortValuesByLabel={false}
+        customDropdownButtonContent={customDropdownButtonContent}
+      />
+      <DrawTool
+        jmv={jmv}
+        activeLayer={activeLayer}
+        handleDraw={handleZoneSubsetClick}
+        theme={theme}
+        group_id={group}
+      ></DrawTool>
+    </div>
   );
 }

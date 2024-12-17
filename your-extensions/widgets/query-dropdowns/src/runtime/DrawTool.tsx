@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { loadArcGISJSAPIModules } from "jimu-arcgis";
 
-const SketchWidget = ({ jmv, activeLayer, handleDraw, theme }) => {
+const SketchWidget = ({ jmv, activeLayer, handleDraw, theme, group_id }) => {
   const sketchRef = useRef(null);
   const sketchViewModelRef = useRef(null);
   const graphicsLayerRef = useRef(null);
@@ -22,27 +22,27 @@ const SketchWidget = ({ jmv, activeLayer, handleDraw, theme }) => {
           view: jmv.view,
           activeFillSymbol: {
             type: "simple-fill",
-            color: "red",
+            color: theme.colors.secondary,
             style: "solid",
             outline: {
-              color: "red",
-              width: "10px",
+              color: theme.colors.primary,
+              width: "2px",
             },
           },
           polygonSymbol: {
             type: "simple-fill",
-            color: "red",
+            color: theme.colors.primary,
             symbolLayers: [
               {
                 type: "fill",
                 material: {
-                  color: "red",
-                  //color: theme.colors.primary,
+                  //color: "red",
+                  color: theme.colors.primary,
                   //color: [255, 255, 255, 0.8],
                 },
                 outline: {
-                  color: "red",
-                  size: "10px",
+                  color: theme.colors.primary,
+                  size: "2px",
                 },
               },
             ],
@@ -51,17 +51,20 @@ const SketchWidget = ({ jmv, activeLayer, handleDraw, theme }) => {
             type: "simple-marker",
             style: "circle",
             size: 10,
-            color: "red", //[255, 255, 255, 0.8],
+            color: theme.colors.secondary, //[255, 255, 255, 0.8],
             outline: {
-              color: [211, 132, 80, 0.7],
+              color: theme.colors.primary,
               size: 10,
             },
           },
         });
 
-        sketchViewModel.on(["create"], async (event) => {
+        sketchViewModel.on(["create", "update"], async (event) => {
           if (event.state === "complete") {
-            console.log(event.graphic.geometry);
+            console.log(event);
+            const geometry =
+              event.graphic?.geometry || event.graphics[0].geometry;
+            console.log(geometry);
             const opts = {
               include: [activeLayer],
             };
@@ -73,9 +76,38 @@ const SketchWidget = ({ jmv, activeLayer, handleDraw, theme }) => {
                 outFields: ["name, zone_name, objectid"],
                 returnGeometry: false,
               };
+              let results;
+              try {
+                results = await activeLayer.queryFeatures(parcelQuery);
+                if (!results.features.length) {
+                  console.warn(
+                    "No results found with the first query. Retrying with a modified query."
+                  );
 
-              const results = await activeLayer.queryFeatures(parcelQuery);
+                  parcelQuery.outFields = ["zone_name, objectid"];
+                  results = await activeLayer.queryFeatures(parcelQuery);
+                }
+                if (results.features.length > 0) {
+                  console.log("Query Results:", results.features);
+                }
+              } catch (error) {
+                try {
+                  console.warn(
+                    "No results found with the first query. Retrying with a modified query."
+                  );
 
+                  parcelQuery.outFields = ["zone_name, objectid"];
+                  results = await activeLayer.queryFeatures(parcelQuery);
+                } catch (error) {
+                  console.error(error);
+                }
+              }
+              if (results.features.length >= 2000) {
+                alert(
+                  "More than 2,000 features selected - please select smaller zone."
+                );
+                return;
+              }
               const newZones = results.features.map((result) => ({
                 label: result.attributes.name,
                 value: result.attributes.zone_name,
@@ -83,11 +115,11 @@ const SketchWidget = ({ jmv, activeLayer, handleDraw, theme }) => {
               }));
 
               console.log(newZones);
-              handleDraw(newZones);
+              handleDraw(newZones, group_id);
             }
 
-            await queryFeaturelayer(event.graphic.geometry);
-            //jmv.view.map.remove(graphicsLayer);
+            await queryFeaturelayer(geometry);
+            jmv.view.map.remove(graphicsLayer);
           }
         });
 
@@ -155,7 +187,7 @@ const SketchWidget = ({ jmv, activeLayer, handleDraw, theme }) => {
   };
 
   return (
-    <div ref={sketchRef}>
+    <div className="drawTool" ref={sketchRef}>
       <button
         className="esri-widget--button esri-icon-polygon"
         onClick={handleDrawPolygon}
