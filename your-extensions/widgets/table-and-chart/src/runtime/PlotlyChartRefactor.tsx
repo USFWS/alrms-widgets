@@ -65,23 +65,27 @@ export default function PlotlyChartRefactor({ dataTable }) {
   const averageGroups = (rawDataTable, fieldToAverage) => {
     const groupedData = [];
     rawDataTable.map((group, index) => {
-      const uniqueStdTime = [...new Set(group.map((item) => item.stdtime))];
-      const averagedData = uniqueStdTime.map((stdTime) => {
-        const results = group.filter((item) => item.stdtime === stdTime);
-        const { weightedSum, totalCount, names } = computeWeightedStats(
-          results,
-          fieldToAverage
-        );
-        const weightedMean = weightedSum / totalCount || 0;
-        return {
-          count: totalCount,
-          mean: weightedMean,
-          names: names,
-          stdtime: stdTime,
-        };
-      });
+      console.log(group);
+      let averagedData;
+      if (group) {
+        const uniqueStdTime = [...new Set(group.map((item) => item.stdtime))];
+        averagedData = uniqueStdTime.map((stdTime) => {
+          const results = group.filter((item) => item.stdtime === stdTime);
+          const { weightedSum, totalCount, names } = computeWeightedStats(
+            results,
+            fieldToAverage
+          );
+          const weightedMean = weightedSum / totalCount || 0;
+          return {
+            count: totalCount,
+            mean: weightedMean,
+            names: names,
+            stdtime: stdTime,
+          };
+        });
+      }
       console.log(averagedData);
-      groupedData.push(averagedData);
+      averagedData && groupedData.push(averagedData);
     });
     return groupedData;
   };
@@ -137,7 +141,7 @@ export default function PlotlyChartRefactor({ dataTable }) {
 
   React.useEffect(() => {
     if (dataTable?.length) {
-      if (dataTable[0].length == 1) {
+      if (dataTable[0][0] && dataTable[0].length == 1) {
         setTraces(createTraces(dataTable[0], "stdtime", "mean", "zone_name"));
       } else if (dataTable[0].length > 1) {
         setTraces(
@@ -168,10 +172,10 @@ export default function PlotlyChartRefactor({ dataTable }) {
   //<Plot data={traces} layout={{ title: { text: "A Fancy Plot" } }} />
   return (
     <div className="plot-container" style={{ width: "100%", height: "100%" }}>
-      <Button onClick={toggleMode} disabled={traces.length === 0}>
+      <Button onClick={toggleMode} disabled={traces?.length === 0}>
         {mode === "markers" ? "Add Lines" : "Remove Lines"}
       </Button>
-      <Button onClick={toggleTable} disabled={traces.length === 0}>
+      <Button onClick={toggleTable} disabled={traces?.length === 0}>
         {tableMode === "scatter" ? "Show Table" : "Show Plot"}
       </Button>
       {tableMode === "scatter" ? (
