@@ -29,6 +29,7 @@ const Widget = (props: AllWidgetProps<IMConfig>) => {
     <div className="root-container">
       <PlotlyChartRefactor
         dataTable={widgetState && widgetState.dataTable}
+        plotType={widgetState && widgetState.plotType}
       ></PlotlyChartRefactor>
       {/* <PlotlyChartRefactor dataTable={widgetState && widgetState.dataTable} /> */}
     </div>

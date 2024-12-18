@@ -84,6 +84,9 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
     props.dispatch(
       appActions.widgetStatePropChange("widget_comms", "dataTable", dataTable)
     );
+    props.dispatch(
+      appActions.widgetStatePropChange("widget_comms", "plotType", plotType)
+    );
   }, [dataTable]);
 
   const zoneSubsetRef = React.useRef(zoneSubsets);
