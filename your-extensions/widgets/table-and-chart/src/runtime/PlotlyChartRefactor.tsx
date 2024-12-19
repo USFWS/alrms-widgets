@@ -39,6 +39,17 @@ export default function PlotlyChartRefactor({ dataTable, plotType }) {
     }
   }
 
+  function getYearFromTime(timestamp) {
+    return new Date(parseInt(timestamp)).getUTCFullYear();
+  }
+
+  function formatText(text) {
+    return text
+      .replace(/_/g, " ")
+      .replace(/\b([a-z])/g, (match) => match.toUpperCase())
+      .replace(/\b(Of)\b/g, (match) => match.toLowerCase());
+  }
+
   const toggleMode = () => {
     setMode((prevMode) =>
       prevMode === "markers" ? "lines+markers" : "markers"
@@ -61,7 +72,7 @@ export default function PlotlyChartRefactor({ dataTable, plotType }) {
       (acc, item) => {
         acc.weightedSum += item[fieldToAverage] * item[countField];
         acc.totalCount += item[countField];
-        acc.names += item.zone_name;
+        acc.names += item.name ? item.name : item.zone_name;
         return acc;
       },
       { weightedSum: 0, totalCount: 0, names: [] }
@@ -106,15 +117,18 @@ export default function PlotlyChartRefactor({ dataTable, plotType }) {
   const createTrace = (data, x_var, y_var, name_field, index) => {
     const groupId = index + 1;
     let x;
+    let itemText;
     if (plotType === 0) {
-      x = data.map((item) => new Date(parseInt(item[x_var])).getUTCFullYear());
+      x = data.map((item) => getYearFromTime(item[x_var]));
+      itemText = data.map((item) => item[name_field]);
     } else {
       x = data.map((item) => item[x_var]);
+      itemText = data.map((item) => getYearFromTime(item.stdtime));
     }
     const newTrace = {
       x: x,
       y: data.map((item) => item[y_var]),
-      text: data.map((item) => item[name_field]),
+      text: itemText,
       mode: mode,
       type: "scatter",
       marker: {
@@ -171,6 +185,7 @@ export default function PlotlyChartRefactor({ dataTable, plotType }) {
           count_1: item0.count,
           count_2: matchingItem ? matchingItem.count : null,
           zone_name: item0.zone_name,
+          name: item0.name,
           stdtime: item0.stdtime,
           var_1: item0.variable,
           var_1_mean: item0.mean,
@@ -191,12 +206,43 @@ export default function PlotlyChartRefactor({ dataTable, plotType }) {
     });
     return combinedArrays;
   };
+  React.useEffect(() => {
+    console.log("useEffect triggered, checking dataTable:", dataTable);
+    if (dataTable?.length) {
+      if (plotType === 0) {
+        const dict1 = dataTable[0][0][0];
+        console.log(dict1);
+        setLabels({
+          title: `Mean ${formatText(dict1.variable)} by Year`,
+          xAxisTitle: "Year",
+          yAxisTitle: `${formatText(dict1.variable)} (${formatText(
+            dict1.unit
+          )})`,
+        });
+      } else {
+        const dict1 = dataTable[0][0][0];
+        const dict2 = dataTable[1][0][0];
+        console.log(dict1, dict2);
+        setLabels({
+          title: `Mean ${formatText(dict1.variable)} by ${formatText(
+            dict2.variable
+          )}`,
+          xAxisTitle: `${formatText(dict1.variable)} (${formatText(
+            dict1.unit
+          )})`,
+          yAxisTitle: `${formatText(dict2.variable)} (${formatText(
+            dict2.unit
+          )})`,
+        });
+      }
+    }
+  }, [traces]);
 
   React.useEffect(() => {
     if (dataTable?.length) {
       if (plotType === 0) {
         if (dataTable[0][0] && dataTable[0].length == 1) {
-          setTraces(createTraces(dataTable[0], "stdtime", "mean", "zone_name"));
+          setTraces(createTraces(dataTable[0], "stdtime", "mean", "name"));
         } else if (dataTable[0].length > 1) {
           console.log(dataTable);
           setTraces(
@@ -214,12 +260,7 @@ export default function PlotlyChartRefactor({ dataTable, plotType }) {
           const combinedArrays = combineXYdata(dataTable[0], dataTable[1]);
           console.log(combinedArrays);
           setTraces(
-            createTraces(
-              combinedArrays,
-              "var_1_mean",
-              "var_2_mean",
-              "zone_name"
-            )
+            createTraces(combinedArrays, "var_1_mean", "var_2_mean", "name")
           );
         } else if (dataTable[0].length > 1) {
           const combinedArrays = combineXYdata(dataTable[0], dataTable[1]);
@@ -257,6 +298,7 @@ export default function PlotlyChartRefactor({ dataTable, plotType }) {
   }, [dataTable, mode, plotType]);
 
   console.log(traces);
+  console.log(labels);
   //<Plot data={traces} layout={{ title: { text: "A Fancy Plot" } }} />
   return (
     <div className="plot-container" style={{ width: "100%", height: "100%" }}>
