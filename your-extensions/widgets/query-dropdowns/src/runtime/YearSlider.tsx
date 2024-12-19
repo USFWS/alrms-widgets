@@ -1,7 +1,15 @@
 import React from "react";
 import "./style.scss";
 
-export default function YearSlider({ min, max, value, step, onChange, theme }) {
+export default function YearSlider({
+  min,
+  max,
+  value,
+  step,
+  onChange,
+  theme,
+  disabled,
+}) {
   //const theme = props.theme;
   const [minValue, setMinValue] = React.useState(value ? value.min : min);
   const [maxValue, setMaxValue] = React.useState(value ? value.max : max);
@@ -47,6 +55,7 @@ export default function YearSlider({ min, max, value, step, onChange, theme }) {
     <div className="wrapper">
       <div className="input-wrapper">
         <input
+          disabled={disabled}
           className="input"
           type="range"
           value={minValue}
@@ -56,6 +65,7 @@ export default function YearSlider({ min, max, value, step, onChange, theme }) {
           onChange={handleMinChange}
         />
         <input
+          disabled={disabled}
           className="input"
           type="range"
           value={maxValue}
