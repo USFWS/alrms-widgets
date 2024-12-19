@@ -76,7 +76,7 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
       );
     }
   };
-  //console.log(zoneSubsets);
+  console.log(zoneSubsets);
   //console.log(tableQuery);
   console.log(dataTable);
 
@@ -106,89 +106,6 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
       );
     }
   }, [zoneSubsets]);
-  /*
-  function handleMapZoneClick(attributes) {
-    const newZone = {
-      label: attributes.name || attributes.zone_name,
-      value: attributes.zone_name,
-      objectid: attributes.objectid,
-    };
-    console.log(newZone);
-    console.log(zoneSubsetRef.current);
-    console.log(zoneSubsetRef.current.includes(newZone));
-    const isInArray = zoneSubsetRef.current.some(
-      (zone) =>
-        zone.label === newZone.label &&
-        zone.value === newZone.value &&
-        zone.objectid === newZone.objectid
-    );
-
-    console.log(isInArray);
-
-    if (isInArray) {
-      // Remove the object from the array
-      const updatedZoneSubset = zoneSubsetRef.current.filter(
-        (zone) =>
-          !(
-            zone.label === newZone.label &&
-            zone.value === newZone.value &&
-            zone.objectid === newZone.objectid
-          )
-      );
-      handleZoneSubsetClick(updatedZoneSubset);
-    } else {
-      // Add the object to the array
-      const updatedZoneSubset = [...zoneSubsetRef.current, newZone];
-      handleZoneSubsetClick(updatedZoneSubset);
-    }
-    //console.log(activeLayer);
-  }
-
-  React.useEffect(() => {
-    console.log("click handler triggered");
-    let clickHandler;
-    let onClick;
-    async function setupLayerView(jmv, activeLayer) {
-      console.log(jmv, activeLayer);
-      if (jmv && activeLayer) {
-        const layerView = await jmv.view.whenLayerView(activeLayer);
-
-        // Define the click event handler
-        clickHandler = async (evt) => {
-          const opts = {
-            include: activeLayer,
-          };
-
-          console.log(activeLayer);
-          console.log(layerView.highlightOptions);
-
-          const response = await jmv.view.hitTest(evt, opts);
-          console.log(response);
-
-          if (response.results.length > 0) {
-            const graphic = response.results[0].graphic;
-            console.log(graphic.attributes);
-            console.log(activeLayer.declaredClass);
-            handleMapZoneClick(graphic.attributes);
-            //layerView.highlight(graphic.attributes["objectid"]);
-          }
-        };
-
-        // Add click event listener to the view
-        onClick = jmv.view.on("click", clickHandler);
-        console.log(onClick);
-      }
-    }
-
-    setupLayerView(jmv, zone.dataset);
-    console.log(onClick);
-    // Cleanup function to remove the event listener
-    return () => {
-      if (clickHandler) {
-        onClick.remove();
-      }
-    };
-  }, [jmv, zone]); */
 
   function convertToUTC(timeEpoch) {
     var d = new Date(timeEpoch);
@@ -380,6 +297,12 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
     }
     if (zone.dataset) {
       zone.dataset.visible = false;
+      setZoneSubsets([
+        {
+          groupId: 1,
+          polygons: [],
+        },
+      ]);
     }
 
     let polygonItems: { label: string; value: string; objectid: number }[];
@@ -794,6 +717,7 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
       {yearRange && (
         <div>
           <YearSlider
+            disabled={!dataSource.source}
             min={Math.min(...yearRange)}
             max={Math.max(...yearRange)}
             step={1}
