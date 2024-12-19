@@ -12,7 +12,14 @@ export default function ZoneSubsetGeo({
 }) {
   const i = group_id;
   return (
-    <div style={{ display: "flex" }}>
+    <div
+      style={{
+        display: "flex",
+        width: "90%",
+        paddingBottom: "16px",
+        gap: "16px",
+      }}
+    >
       <Button>Group {i}</Button>
       <DrawTool
         jmv={jmv}

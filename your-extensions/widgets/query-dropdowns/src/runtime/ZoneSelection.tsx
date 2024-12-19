@@ -2,6 +2,7 @@ import React from "react";
 import { Dropdown, DropdownButton, Button, Label, Checkbox } from "jimu-ui";
 import ZoneSubsetSelect from "./ZoneSubsetSelect";
 import ZoneSubsetGeo from "./ZoneSubsetGeo";
+import "./style.scss";
 
 export default function ZoneSelection({
   zone,
@@ -28,9 +29,15 @@ export default function ZoneSelection({
   };
 
   const GroupButtons = () => (
-    <div style={{ display: "flex", fontSize: "2px" }}>
-      <Button onClick={handleAddGroup}>Add Group</Button>
-      <Button disabled={zoneSubsets.length < 2} onClick={handleDeleteGroup}>
+    <div className="group-buttons">
+      <Button className="btn" onClick={handleAddGroup}>
+        Add Group
+      </Button>
+      <Button
+        className="btn"
+        disabled={zoneSubsets.length < 2}
+        onClick={handleDeleteGroup}
+      >
         Delete Group
       </Button>
     </div>
@@ -48,18 +55,23 @@ export default function ZoneSelection({
     <>
       <Label>
         <Checkbox checked={multGroups} onChange={handleCheckbox} /> Compare
-        Multiple Groups
+        Groups
       </Label>
+      <br></br>
 
       {!zone.dataset ? (
-        <Dropdown className="dropdown">
+        <Dropdown className="dropdown" style={{ paddingBottom: "16px" }}>
           <DropdownButton disabled={true}>Select Zone Dataset</DropdownButton>
         </Dropdown>
       ) : zone.polygons.length > 0 ? (
         <>
           {zoneSubsets.map((group) => (
             <div key={group.groupId}>
-              {multGroups && <p>Group {group.groupId}</p>}
+              {multGroups && (
+                <span>
+                  <strong>Group {group.groupId}</strong>
+                </span>
+              )}
               <ZoneSubsetSelect
                 group={group.groupId}
                 polygons={zone.polygons}

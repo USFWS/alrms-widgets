@@ -36,6 +36,7 @@ h4 {
   min-width: 100px;
   max-width: 200px;
   width: 90%;
+  padding-bottom: 0px;
 }
 
 .render-container {
@@ -80,6 +81,11 @@ h4 {
   opacity: 0;
   z-index: 3;
   padding: 0;
+
+  .group-buttons {
+    display: flex;
+    padding-bottom: 8px;
+  }
 
   &::-ms-track {
     @include track-styles;
