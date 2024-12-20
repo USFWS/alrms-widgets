@@ -47,7 +47,7 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
   ]);
   const [graphicsLayers, setGraphicsLayers] = React.useState({});
   const [var1, setVar1] = React.useState("");
-  const [var2Options, setvar2Options] = React.useState([]);
+  const [var2Options, setVar2Options] = React.useState([]);
   const [var2, setVar2] = React.useState("");
   const [dataSource, setDataSource] = React.useState({
     source: "",
@@ -61,24 +61,18 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
     max: Math.max(...yearRange),
   });
   const [tableQuery, setTableQuery] = React.useState([]);
-  //const [zoneSubsetGroups, setZoneSubsetGroups] = React.useState(["Group 1"]);
-  //Set up widget with map and map layers
+
   const activeViewChangeHandler = (jmv: JimuMapView) => {
     if (jmv && jmv.view.map) {
-      //jmv.view.highlightOptions = {
-      //  color: "#8af542",
-      //  haloOpacity: 0.7,
-      //  fillOpacity: 0.2,
-      //};
       setJmv(jmv);
       setInitialZones(
         jmv?.view.map.layers.items.filter((item) => item.type == "feature")
       );
     }
   };
-  console.log(zoneSubsets);
+  //console.log(zoneSubsets);
   //console.log(tableQuery);
-  console.log(dataTable);
+  //console.log(dataTable);
 
   React.useEffect(() => {
     props.dispatch(
@@ -190,13 +184,9 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
           .map((id) => `'${id.value}'`)
           .join(", ");
         if (plotType == 0) {
-          //const query = `zone_name IN ('inn', 'ykf') AND variable = 'first_snow_day' AND stdtime >= date '2001-01-01' AND stdtime <= date '2020-01-01'`;
-          //zone_name IN "'Innoko, Kanuti, Yukon Flats'" AND
-          //const query = `zone_name IN (${zoneSubsetString}) AND variable = '${var1}' AND stdtime >= date '${yearValues.min}-01-01' AND stdtime <= date '${yearValues.max}-01-01'`;
           const query = `zone_name IN (${zoneSubsetString}) AND variable = '${var1}' AND stdtime >= date '${yearValues.min}-01-01' AND stdtime <= date '${yearValues.max}-01-01'`;
           console.log("setting query");
           tableQueries.push(query);
-          //setTableQuery([query]);
         } else if (plotType == 1) {
           const query1 = `zone_name IN (${zoneSubsetString}) AND variable = '${var1}' AND stdtime >= date '${yearValues.min}-01-01' AND stdtime <= date '${yearValues.max}-01-01'`;
           const query2 = `zone_name IN (${zoneSubsetString}) AND variable = '${
@@ -205,28 +195,35 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
             yearValues.min
           }-01-01' AND stdtime <= date '${yearValues.max}-01-01'`;
           tableQueries.push([query1, query2]);
-          //setTableQuery([query1, query2]);
         }
       }
-      console.log(tableQueries);
+      console.log("Table Queries Set:", tableQueries);
       setTableQuery(tableQueries);
-      //const zoneSubsetString = zoneSubset.map((zone) => zone.name);
     }
   }, [zone, dataSource, zoneSubsets, plotType, var1, var2, yearValues]);
 
   async function dispatchTable() {
-    async function loadTableStructure(table, queryString) {
+    async function loadTableStructure(table, queryString, index) {
       try {
         if (table.type === "feature") {
           await table.load();
-          //console.log(table.fields.map((field) => field.name));
           const query = table.createQuery();
           query.returnDistinctValues = true;
+          query.maxRecordCountFactor = 5;
           query.where = queryString;
           console.log(queryString);
           const queryResults = await table.queryFeatures(query);
           console.log(queryResults);
-          //const csvString = convertFeaturesToCSV(queryResults.features);
+          if (
+            queryResults.features.length ==
+            2000 * query.maxRecordCountFactor
+          ) {
+            alert(
+              `Results for Group ${index + 1} may have exceeded query limits (${
+                2000 * query.maxRecordCountFactor
+              } table rows) and truncated data.\n Suggest limiting time range or geographic area of group.`
+            );
+          }
           return queryResults.features.map((feature) => feature.attributes);
         }
       } catch (error) {
@@ -240,8 +237,12 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
         )[0];
         if (table) {
           const dataTableResults = await Promise.all(
-            tableQuery.map(async (query) => {
-              const dataTableResult = await loadTableStructure(table, query);
+            tableQuery.map(async (query, index) => {
+              const dataTableResult = await loadTableStructure(
+                table,
+                query,
+                index
+              );
               return dataTableResult;
             })
           );
@@ -263,19 +264,21 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
         )[0];
         if (table1 && table2) {
           const dataTable1Results = await Promise.all(
-            tableQuery.map(async (query) => {
+            tableQuery.map(async (query, index) => {
               const dataTable1Result = await loadTableStructure(
                 table1,
-                query[0]
+                query[0],
+                index
               );
               return dataTable1Result;
             })
           );
           const dataTable2Results = await Promise.all(
-            tableQuery.map(async (query) => {
+            tableQuery.map(async (query, index) => {
               const dataTable2Result = await loadTableStructure(
                 table2,
-                query[1]
+                query[1],
+                index
               );
               return dataTable2Result;
             })
@@ -333,11 +336,7 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
             });
         });
     };
-    //query.outFields = ["name, zone_name, objectid"];
 
-    //layerItem
-    //  .queryFeatures(query)
-    //  .then(function (results) {
     tryQuery(query)
       .then((results) => {
         console.log(results);
@@ -366,9 +365,6 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
             polygons: polygonItems,
           });
           console.log(polygonItems);
-          /*           setZoneSubset(
-            polygonItems.filter((poly) => poly.value !== "select_all")
-          ); */
         } else {
           setZone({
             dataset: layerItem,
@@ -378,7 +374,6 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
             ),
             polygons: [],
           });
-          /*           setZoneSubset([]); */
         }
       })
       .catch((error) => {
@@ -422,12 +417,11 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
                   width: 0,
                 },
               },
-              attributes: { oid: polygon.oid }, // Store the oid in attributes
+              attributes: { oid: polygon.oid },
             });
           })
         );
 
-        // Clear existing graphics and add new ones
         groupLayer.removeAll();
         groupLayer.addMany(graphics);
         console.log("setting:", newGraphicsLayers);
@@ -528,9 +522,7 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
     console.log(zoneSubsets);
     setZoneSubsets((prevGroups) =>
       prevGroups.map((group) =>
-        group.groupId === group_id
-          ? { ...group, polygons: newPolys } // Add newPolygon to the existing polygons
-          : group
+        group.groupId === group_id ? { ...group, polygons: newPolys } : group
       )
     );
   }
@@ -554,7 +546,7 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
     //    jmv.view.map.add(imageryLayer);
     //  }
     //);
-    setvar2Options(props.config.AllowedCombinations[variable].asMutable());
+    setVar2Options(props.config.AllowedCombinations[variable].asMutable());
     //var2 && setVar2("");
     //var2 && console.log(var2);
   }
