@@ -96,6 +96,7 @@ export default function ZoneSelection({
                 handleDraw={handleZoneSubsetClick}
                 theme={theme}
                 group_id={group.groupId}
+                selectedZones={group.polygons}
               />
             </div>
           ))}
