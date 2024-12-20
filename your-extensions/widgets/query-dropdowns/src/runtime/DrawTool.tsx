@@ -102,9 +102,9 @@ const SketchWidget = ({ jmv, activeLayer, handleDraw, theme, group_id }) => {
                   console.error(error);
                 }
               }
-              if (results.features.length >= 2000) {
+              if (results.features.length >= 500) {
                 alert(
-                  "More than 2,000 features selected - please select smaller zone."
+                  "More than 500 features selected - please select smaller zone."
                 );
                 return;
               }
@@ -144,42 +144,7 @@ const SketchWidget = ({ jmv, activeLayer, handleDraw, theme, group_id }) => {
       sketchViewModelRef.current.create("polygon");
     }
   };
-  //   function handleMapZoneClick(attributes) {
-  //     const newZone = {
-  //       label: attributes.name,
-  //       value: attributes.zone_name,
-  //       objectid: attributes.objectid,
-  //     };
-  //     console.log(newZone);
-  //     console.log(zoneSubsetRef.current);
-  //     console.log(zoneSubsetRef.current.includes(newZone));
-  //     const isInArray = zoneSubsetRef.current.some(
-  //       (zone) =>
-  //         zone.label === newZone.label &&
-  //         zone.value === newZone.value &&
-  //         zone.objectid === newZone.objectid
-  //     );
 
-  //     console.log(isInArray);
-
-  //     if (isInArray) {
-  //       // Remove the object from the array
-  //       const updatedZoneSubset = zoneSubsetRef.current.filter(
-  //         (zone) =>
-  //           !(
-  //             zone.label === newZone.label &&
-  //             zone.value === newZone.value &&
-  //             zone.objectid === newZone.objectid
-  //           )
-  //       );
-  //       handleZoneSubsetClick(updatedZoneSubset);
-  //     } else {
-  //       // Add the object to the array
-  //       const updatedZoneSubset = [...zoneSubsetRef.current, newZone];
-  //       handleZoneSubsetClick(updatedZoneSubset);
-  //     }
-  //     //console.log(activeLayer);
-  //   }
   const handleDrawPoint = () => {
     if (sketchViewModelRef.current) {
       sketchViewModelRef.current.create("point");
