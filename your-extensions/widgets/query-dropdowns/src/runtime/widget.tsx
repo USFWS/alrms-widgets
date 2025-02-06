@@ -14,11 +14,11 @@ import { appActions } from "jimu-core";
 import Var1Dropdown from "./Var1Dropdown";
 import Var2Dropdown from "./Var2Dropdown";
 import ZoneDropdown from "./ZoneDropdown";
-import ZoneSubsetSelect from "./ZoneSubsetSelect";
+//import ZoneSubsetSelect from "./ZoneSubsetSelect";
 import DataSourceDropdown from "./DataSourceDropdown";
 import YearSlider from "./YearSlider";
-import DrawTool from "./DrawTool";
-import ZoneSubsetGeo from "./ZoneSubsetGeo";
+//import DrawTool from "./DrawTool";
+//import ZoneSubsetGeo from "./ZoneSubsetGeo";
 import { loadArcGISJSAPIModules } from "jimu-arcgis";
 import ZoneSelection from "./ZoneSelection";
 
@@ -39,6 +39,7 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
       },
     ],
   });
+  console.log(zone);
   const [zoneSubsets, setZoneSubsets] = React.useState([
     {
       groupId: 1,
@@ -49,6 +50,7 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
   const [var1, setVar1] = React.useState("");
   const [var2Options, setVar2Options] = React.useState([]);
   const [var2, setVar2] = React.useState("");
+  console.log(var2Options);
   const [dataSource, setDataSource] = React.useState({
     source: "",
     variables: [],
@@ -307,6 +309,7 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
         },
       ]);
     }
+    console.log(layerItem);
 
     let polygonItems: { label: string; value: string; objectid: number }[];
     console.log("querying zone tables");
@@ -550,6 +553,42 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
     //var2 && setVar2("");
     //var2 && console.log(var2);
   }
+
+  React.useEffect(() => {
+    if (zone && var1) {
+      const allowedCombs = props.config.AllowedCombinations[var1].asMutable();
+      const ancillaryTable = zone.tables.filter((table) =>
+        table.title.includes("Ancillary")
+      );
+      if (ancillaryTable.length === 1) {
+        ancillaryTable[0]
+          .load()
+          .then((loadedData) => {
+            const filteredFieldNames = loadedData.fields
+              .filter((field) => {
+                const excludedStrings = [
+                  "objectid",
+                  "stdtime",
+                  "zone_name",
+                  "name",
+                ];
+                return !excludedStrings.some((excluded) =>
+                  field.name.toLowerCase().includes(excluded.toLowerCase())
+                );
+              })
+              .map((field) => field.name);
+            console.log({ "Ancillary Data": filteredFieldNames });
+            setVar2Options({
+              ...allowedCombs,
+              ...{ "Ancillary Data": filteredFieldNames },
+            });
+          })
+          .catch((error) => {
+            console.error("Error loading data:", error);
+          });
+      }
+    }
+  }, [zone, var1]);
 
   React.useEffect(() => {
     if (dataSource.source) {
