@@ -261,9 +261,16 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
         const table1 = zone.tables.filter((table) =>
           table.title.includes(dataSource.source.split(" ")[1])
         )[0];
-        const table2 = zone.tables.filter((table) =>
-          table.title.includes(var2.split(":")[0].split(" ")[1])
-        )[0];
+        let table2;
+        if (var2.toLowerCase().includes("ancillary")) {
+          table2 = zone.tables.filter((table) =>
+            table.title.toLowerCase().includes("ancillary")
+          )[0];
+        } else {
+          table2 = zone.tables.filter((table) =>
+            table.title.includes(var2.split(":")[0].split(" ")[1])
+          )[0];
+        }
         if (table1 && table2) {
           const dataTable1Results = await Promise.all(
             tableQuery.map(async (query, index) => {
@@ -561,31 +568,28 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
         table.title.includes("Ancillary")
       );
       if (ancillaryTable.length === 1) {
-        ancillaryTable[0]
-          .load()
-          .then((loadedData) => {
-            const filteredFieldNames = loadedData.fields
-              .filter((field) => {
-                const excludedStrings = [
-                  "objectid",
-                  "stdtime",
-                  "zone_name",
-                  "name",
-                ];
-                return !excludedStrings.some((excluded) =>
-                  field.name.toLowerCase().includes(excluded.toLowerCase())
-                );
-              })
-              .map((field) => field.name);
-            console.log({ "Ancillary Data": filteredFieldNames });
-            setVar2Options({
-              ...allowedCombs,
-              ...{ "Ancillary Data": filteredFieldNames },
+        const query = ancillaryTable[0].createQuery();
+        query.returnGeometry = false;
+
+        const tryQuery = (query) => {
+          query.outFields = ["variable"];
+          return ancillaryTable[0]
+            .queryFeatures(query)
+            .then(function (results) {
+              return results;
             });
-          })
-          .catch((error) => {
-            console.error("Error loading data:", error);
+        };
+        tryQuery(query).then((results) => {
+          const uniqueValues = [
+            ...new Set(
+              results.features.map((feature) => feature.attributes.variable)
+            ),
+          ];
+          setVar2Options({
+            ...allowedCombs,
+            ...{ "Ancillary Data": uniqueValues },
           });
+        });
       }
     }
   }, [zone, var1]);
