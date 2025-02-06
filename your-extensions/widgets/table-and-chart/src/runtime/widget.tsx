@@ -30,6 +30,7 @@ const Widget = (props: AllWidgetProps<IMConfig>) => {
       <PlotlyChartRefactor
         dataTable={widgetState && widgetState.dataTable}
         plotType={widgetState && widgetState.plotType}
+        ancillary={widgetState && widgetState.ancillary}
       ></PlotlyChartRefactor>
       {/* <PlotlyChartRefactor dataTable={widgetState && widgetState.dataTable} /> */}
     </div>

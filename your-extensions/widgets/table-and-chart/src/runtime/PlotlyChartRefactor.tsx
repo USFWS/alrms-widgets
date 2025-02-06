@@ -5,7 +5,11 @@ import TableComponent from "./TableComponent";
 import { Button } from "jimu-ui";
 //import { ResultsFieldSetting } from "dist/widgets/arcgis/query/src/setting/results-field";
 
-export default function PlotlyChartRefactor({ dataTable, plotType }) {
+export default function PlotlyChartRefactor({
+  dataTable,
+  plotType,
+  ancillary,
+}) {
   console.log("Data Table", dataTable);
   console.log("Plot Type", plotType);
   const [mode, setMode] = React.useState("markers");
@@ -70,9 +74,11 @@ export default function PlotlyChartRefactor({ dataTable, plotType }) {
   const computeWeightedStats = (items, fieldToAverage, countField) => {
     return items.reduce(
       (acc, item) => {
-        acc.weightedSum += item[fieldToAverage] * item[countField];
-        acc.totalCount += item[countField];
-        acc.names += item.name ? item.name : item.zone_name;
+        const count =
+          typeof countField === "number" ? countField : item[countField];
+        acc.weightedSum += item[fieldToAverage] * count;
+        acc.totalCount += count;
+        acc.names.push(item.name ? item.name : item.zone_name);
         return acc;
       },
       { weightedSum: 0, totalCount: 0, names: [] }
@@ -195,6 +201,7 @@ export default function PlotlyChartRefactor({ dataTable, plotType }) {
           var_1_std: item0.std,
           var_1_unit: item0.unit,
           var_2: matchingItem ? matchingItem.variable : null,
+          var_2_value: matchingItem ? matchingItem.value : null,
           var_2_mean: matchingItem ? matchingItem.mean : null,
           var_2_median: matchingItem ? matchingItem.median : null,
           var_2_min: matchingItem ? matchingItem.min : null,
@@ -227,12 +234,12 @@ export default function PlotlyChartRefactor({ dataTable, plotType }) {
           title: `Mean ${formatText(dict1.variable)} by ${formatText(
             dict2.variable
           )}`,
-          xAxisTitle: `${formatText(dict1.variable)} (${formatText(
-            dict1.unit
-          )})`,
-          yAxisTitle: `${formatText(dict2.variable)} (${formatText(
-            dict2.unit
-          )})`,
+          xAxisTitle: `${formatText(dict1.variable)}${
+            dict1.unit ? ` (${formatText(dict1.unit)})` : ""
+          }`,
+          yAxisTitle: `${formatText(dict2.variable)}${
+            dict2.unit ? ` (${formatText(dict2.unit)})` : ""
+          }`,
         });
       }
     }
@@ -244,7 +251,6 @@ export default function PlotlyChartRefactor({ dataTable, plotType }) {
         if (dataTable[0][0] && dataTable[0].length == 1) {
           setTraces(createTraces(dataTable[0], "stdtime", "mean", "name"));
         } else if (dataTable[0].length > 1) {
-          console.log(dataTable);
           setTraces(
             createTraces(
               averageGroups(dataTable[0], ["mean", "median", "std"]),
@@ -258,29 +264,50 @@ export default function PlotlyChartRefactor({ dataTable, plotType }) {
       } else {
         if (dataTable[0][0] && dataTable[0].length == 1) {
           const combinedArrays = combineXYdata(dataTable[0], dataTable[1]);
-          console.log(combinedArrays);
-          setTraces(
-            createTraces(combinedArrays, "var_1_mean", "var_2_mean", "name")
-          );
+          if (ancillary) {
+            setTraces(
+              createTraces(combinedArrays, "var_1_mean", "var_2_value", "name")
+            );
+          } else {
+            setTraces(
+              createTraces(combinedArrays, "var_1_mean", "var_2_mean", "name")
+            );
+          }
         } else if (dataTable[0].length > 1) {
           const combinedArrays = combineXYdata(dataTable[0], dataTable[1]);
-          console.log(combinedArrays);
-          setTraces(
-            createTraces(
-              averageGroups(combinedArrays, [
-                ["var_1_mean", "count_1"],
-                ["var_2_mean", "count_2"],
-                ["var_1_median", "count_1"],
-                ["var_2_median", "count_2"],
-                ["var_1_std", "count_1"],
-                ["var_2_std", "count_2"],
-              ]),
-              "var_1_mean",
-              "var_2_mean",
-              "names",
-              true
-            )
-          );
+          if (ancillary) {
+            setTraces(
+              createTraces(
+                averageGroups(combinedArrays, [
+                  ["var_1_mean", "count_1"],
+                  ["var_1_median", "count_1"],
+                  ["var_1_std", "count_1"],
+                  ["var_2_value", 1],
+                ]),
+                "var_1_mean",
+                "var_2_value",
+                "names",
+                true
+              )
+            );
+          } else {
+            setTraces(
+              createTraces(
+                averageGroups(combinedArrays, [
+                  ["var_1_mean", "count_1"],
+                  ["var_2_mean", "count_2"],
+                  ["var_1_median", "count_1"],
+                  ["var_2_median", "count_2"],
+                  ["var_1_std", "count_1"],
+                  ["var_2_std", "count_2"],
+                ]),
+                "var_1_mean",
+                "var_2_mean",
+                "names",
+                true
+              )
+            );
+          }
         }
       }
     } else {

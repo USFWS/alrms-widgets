@@ -50,7 +50,7 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
   const [var1, setVar1] = React.useState("");
   const [var2Options, setVar2Options] = React.useState([]);
   const [var2, setVar2] = React.useState("");
-  console.log(var2Options);
+  const [ancillary, setAncillary] = React.useState(false);
   const [dataSource, setDataSource] = React.useState({
     source: "",
     variables: [],
@@ -82,6 +82,9 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
     );
     props.dispatch(
       appActions.widgetStatePropChange("widget_comms", "plotType", plotType)
+    );
+    props.dispatch(
+      appActions.widgetStatePropChange("widget_comms", "ancillary", ancillary)
     );
   }, [dataTable]);
 
@@ -568,6 +571,7 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
         table.title.includes("Ancillary")
       );
       if (ancillaryTable.length === 1) {
+        setAncillary(true);
         const query = ancillaryTable[0].createQuery();
         query.returnGeometry = false;
 
@@ -590,6 +594,8 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
             ...{ "Ancillary Data": uniqueValues },
           });
         });
+      } else {
+        setAncillary(false);
       }
     }
   }, [zone, var1]);
