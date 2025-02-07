@@ -236,7 +236,12 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
       }
     }
     if (plotType === 0) {
-      if (zone.dataset && dataSource.source && var1) {
+      if (
+        zone.dataset &&
+        dataSource.source &&
+        zoneSubsets[0].polygons.length &&
+        var1
+      ) {
         const table = zone.tables.filter((table) =>
           table.title.includes(dataSource.source.split(" ")[1])
         )[0];
@@ -256,11 +261,17 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
           console.error("No matching table found.");
         }
       } else {
-        console.error("Required conditions are not met.");
+        alert("Required conditions are not met.");
       }
     }
     if (plotType === 1) {
-      if (zone.dataset && dataSource.source && var1 && var2) {
+      if (
+        zone.dataset &&
+        dataSource.source &&
+        zoneSubsets[0].polygons.length &&
+        var1 &&
+        var2
+      ) {
         const table1 = zone.tables.filter((table) =>
           table.title.includes(dataSource.source.split(" ")[1])
         )[0];
@@ -269,10 +280,12 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
           table2 = zone.tables.filter((table) =>
             table.title.toLowerCase().includes("ancillary")
           )[0];
+          setAncillary(true);
         } else {
           table2 = zone.tables.filter((table) =>
             table.title.includes(var2.split(":")[0].split(" ")[1])
           )[0];
+          setAncillary(false);
         }
         if (table1 && table2) {
           const dataTable1Results = await Promise.all(
@@ -300,7 +313,7 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
           console.error("Error fetching table(s).");
         }
       } else {
-        console.error("Required conditions are not met.");
+        alert("Required conditions are not met.");
       }
     }
   }
@@ -571,7 +584,6 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
         table.title.includes("Ancillary")
       );
       if (ancillaryTable.length === 1) {
-        setAncillary(true);
         const query = ancillaryTable[0].createQuery();
         query.returnGeometry = false;
 
@@ -594,8 +606,6 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
             ...{ "Ancillary Data": uniqueValues },
           });
         });
-      } else {
-        setAncillary(false);
       }
     }
   }, [zone, var1]);

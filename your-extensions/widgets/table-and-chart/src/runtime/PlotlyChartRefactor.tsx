@@ -10,8 +10,8 @@ export default function PlotlyChartRefactor({
   plotType,
   ancillary,
 }) {
-  console.log("Data Table", dataTable);
-  console.log("Plot Type", plotType);
+  //console.log("Data Table", dataTable);
+  //console.log("Plot Type", plotType);
   const [mode, setMode] = React.useState("markers");
   const [tableMode, setTableMode] = React.useState("scatter");
   const [labels, setLabels] = React.useState({
@@ -246,11 +246,14 @@ export default function PlotlyChartRefactor({
   }, [traces]);
 
   React.useEffect(() => {
+    console.log("Creating traces");
     if (dataTable?.length) {
       if (plotType === 0) {
+        console.log("Creating time series");
         if (dataTable[0][0] && dataTable[0].length == 1) {
           setTraces(createTraces(dataTable[0], "stdtime", "mean", "name"));
         } else if (dataTable[0].length > 1) {
+          console.log("creating grouped time series");
           setTraces(
             createTraces(
               averageGroups(dataTable[0], ["mean", "median", "std"]),
@@ -261,8 +264,13 @@ export default function PlotlyChartRefactor({
             )
           );
         }
-      } else {
+      } else if (dataTable[0][0].length && dataTable[1][0].length) {
+        console.log("creating scatter plot");
         if (dataTable[0][0] && dataTable[0].length == 1) {
+          console.log("creating non-grouped scatter");
+          console.log("Ancillary", ancillary);
+          console.log(dataTable[0][0].length);
+          console.log(dataTable[1][0].length);
           const combinedArrays = combineXYdata(dataTable[0], dataTable[1]);
           if (ancillary) {
             setTraces(
@@ -274,6 +282,7 @@ export default function PlotlyChartRefactor({
             );
           }
         } else if (dataTable[0].length > 1) {
+          console.log("creating grouped scatter");
           const combinedArrays = combineXYdata(dataTable[0], dataTable[1]);
           if (ancillary) {
             setTraces(
@@ -309,6 +318,8 @@ export default function PlotlyChartRefactor({
             );
           }
         }
+      } else {
+        alert("Insufficient valid data for these parameters.");
       }
     } else {
       setTraces([
@@ -324,8 +335,8 @@ export default function PlotlyChartRefactor({
     }
   }, [dataTable, mode, plotType]);
 
-  console.log(traces);
-  console.log(labels);
+  //console.log(traces);
+  //console.log(labels);
   //<Plot data={traces} layout={{ title: { text: "A Fancy Plot" } }} />
   return (
     <div className="plot-container" style={{ width: "100%", height: "100%" }}>
