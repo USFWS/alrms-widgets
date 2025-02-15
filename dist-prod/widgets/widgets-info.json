@@ -7476,39 +7476,6 @@
     "group": 7
   },
   {
-    "name": "feature-layer-function",
-    "manifest": {
-      "name": "feature-layer-function",
-      "label": "Feature Layer (Function)",
-      "type": "widget",
-      "version": "1.12.0",
-      "exbVersion": "1.12.0",
-      "author": "Esri R&D Center Beijing",
-      "dependencies": "jimu-arcgis",
-      "description": "This is the widget used in developer documentation",
-      "copyright": "",
-      "license": "http://www.apache.org/licenses/LICENSE-2.0",
-      "properties": {},
-      "translatedLocales": [
-        "en"
-      ],
-      "defaultSize": {
-        "width": 400,
-        "height": 400
-      }
-    },
-    "i18nLabel": {
-      "en": "Feature Layer (Function)"
-    },
-    "i18nDescription": {
-      "en": null
-    },
-    "uri": "widgets/feature-layer-function/",
-    "icon": "widgets/feature-layer-function/icon.svg",
-    "order": 700,
-    "group": 7
-  },
-  {
     "name": "get-data-sources",
     "manifest": {
       "name": "get-data-sources",
@@ -7727,9 +7694,9 @@
       "type": "widget",
       "version": "1.12.0",
       "exbVersion": "1.12.0",
-      "author": "Esri R&D Center Beijing",
-      "description": "This is a barebones, simple widget. It includes an example of how to use the config file, and it includes a placeholder SVG icon. It intentionally does not include the following so you can use this to start from scratch: i18n translations, a Settings panel, unit tests. See the documentation for more information on how to implement these features.",
-      "copyright": "",
+      "author": "Geographic Information Network of Alaska",
+      "description": "Visualizes pre-processed datasets given parameters set in query-dropdowns widget for the FWS ALRMS Web Application.",
+      "copyright": "Geographic Information Network of Alaska",
       "license": "http://www.apache.org/licenses/LICENSE-2.0",
       "properties": {},
       "translatedLocales": [
