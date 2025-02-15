@@ -7,7 +7,7 @@ import TableComponent from "./TableComponent";
 export default function PlotlyChart({ dataTable }) {
   const [mode, setMode] = useState("markers");
   const [tableMode, setTableMode] = useState("scatter");
-
+  console.log(dataTable);
   const { traces, title, unit1, unit2 } = useMemo(() => {
     if (!dataTable || dataTable.length === 0) {
       return {
@@ -38,20 +38,39 @@ export default function PlotlyChart({ dataTable }) {
         .join(" ");
     }
 
-    if (dataTable.length === 1) {
-      const table1: TableItem[] = dataTable[0];
-      title = formatString(table1[0].variable);
-      unit1 = `${formatString(table1[0].variable)} (${formatString(
-        table1[0].unit
-      )})`;
-      unit2 = "Year";
+    const table1: TableItem[] = dataTable[0];
+    title = formatString(table1[0][0].variable);
+    unit1 = `${formatString(table1[0][0].variable)} (${formatString(
+      table1[0][0].unit
+    )})`;
+    unit2 = "Year";
 
-      const names = [...new Set(table1.map((item) => item.name))];
+    if (table1.length === 1) {
+      const names = [...new Set(table1[0].map((item) => item.name))];
+      console.log(table1);
+      const keys = ["name", "mean", "stdtime"];
+      const columns = {};
+
+      keys.forEach((key) => {
+        columns[key] = [];
+      });
+
+      table1[0].forEach((row) => {
+        keys.forEach((key) => {
+          columns[key].push(row[key]);
+        });
+      });
+
+      console.log(columns);
+      console.log(names);
+      console.log(table1.filter((item) => item.name === name));
+
+      /*       const names = [...new Set(table1.map((item) => item.name))];
       console.log(table1);
       const keys = ["name", "mean", "stdtime"];
       /*       const names = Array.from(table1.map((item) => item.name));
       const stdtime = Array.from(table1.map((item) => item.stdtime));
-      const means = Array.from(table1.map((item) => item.mean)); */
+      const means = Array.from(table1.map((item) => item.mean));
 
       // Create an object to hold arrays for each column
       const columns = {}; // name: [], mean: [], stdtime: [] };
@@ -70,7 +89,7 @@ export default function PlotlyChart({ dataTable }) {
 
       console.log(columns);
       console.log(names);
-      console.log(table1.filter((item) => item.name === name));
+      console.log(table1.filter((item) => item.name === name)); */
       if (tableMode === "scatter" || dataTable.length > 1) {
         traces = names.map((name) => {
           const filteredData = table1.filter((item) => item.name === name);

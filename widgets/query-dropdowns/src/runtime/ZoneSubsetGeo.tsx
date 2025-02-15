@@ -9,11 +9,23 @@ export default function ZoneSubsetGeo({
   handleDraw,
   theme,
   group_id,
+  selectedZones,
 }) {
-  const i = 1;
+  const i = group_id;
   return (
-    <div style={{ display: "flex" }}>
-      <Button>Group {i}</Button>
+    <div
+      style={{
+        display: "flex",
+        width: "90%",
+        paddingBottom: "16px",
+        gap: "16px",
+      }}
+    >
+      <Button>
+        {selectedZones.length
+          ? `Group ${i}: ${selectedZones.length} Tiles`
+          : `Group ${i}`}
+      </Button>
       <DrawTool
         jmv={jmv}
         activeLayer={activeLayer}

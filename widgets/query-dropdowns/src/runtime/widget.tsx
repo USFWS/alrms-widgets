@@ -14,17 +14,19 @@ import { appActions } from "jimu-core";
 import Var1Dropdown from "./Var1Dropdown";
 import Var2Dropdown from "./Var2Dropdown";
 import ZoneDropdown from "./ZoneDropdown";
-import ZoneSubsetSelect from "./ZoneSubsetSelect";
+//import ZoneSubsetSelect from "./ZoneSubsetSelect";
 import DataSourceDropdown from "./DataSourceDropdown";
 import YearSlider from "./YearSlider";
-import DrawTool from "./DrawTool";
-import ZoneSubsetGeo from "./ZoneSubsetGeo";
+//import DrawTool from "./DrawTool";
+//import ZoneSubsetGeo from "./ZoneSubsetGeo";
 import { loadArcGISJSAPIModules } from "jimu-arcgis";
+import ZoneSelection from "./ZoneSelection";
 
 export default function Widget(props: AllWidgetProps<IMConfig>) {
-  console.log("Props:", props);
+  //console.log("Props:", props);
 
   const [jmv, setJmv] = React.useState<JimuMapView | null>(null);
+  const [initialZones, setInitialZones] = React.useState([]);
   const [zone, setZone] = React.useState({
     dataset: null,
     title: "",
@@ -37,15 +39,18 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
       },
     ],
   });
+  console.log(zone);
   const [zoneSubsets, setZoneSubsets] = React.useState([
     {
       groupId: 1,
       polygons: [],
     },
   ]);
+  const [graphicsLayers, setGraphicsLayers] = React.useState({});
   const [var1, setVar1] = React.useState("");
-  const [var2Options, setvar2Options] = React.useState([]);
+  const [var2Options, setVar2Options] = React.useState([]);
   const [var2, setVar2] = React.useState("");
+  const [ancillary, setAncillary] = React.useState(false);
   const [dataSource, setDataSource] = React.useState({
     source: "",
     variables: [],
@@ -58,25 +63,28 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
     max: Math.max(...yearRange),
   });
   const [tableQuery, setTableQuery] = React.useState([]);
-  const [zoneSubsetGroups, setZoneSubsetGroups] = React.useState(["Group 1"]);
-  //Set up widget with map and map layers
+
   const activeViewChangeHandler = (jmv: JimuMapView) => {
     if (jmv && jmv.view.map) {
-      jmv.view.highlightOptions = {
-        color: "#8af542",
-        haloOpacity: 0.7,
-        fillOpacity: 0.2,
-      };
       setJmv(jmv);
+      setInitialZones(
+        jmv?.view.map.layers.items.filter((item) => item.type == "feature")
+      );
     }
   };
-  console.log(zoneSubsets);
-  console.log(tableQuery);
-  console.log(dataTable);
+  //console.log(zoneSubsets);
+  //console.log(tableQuery);
+  //console.log(dataTable);
 
   React.useEffect(() => {
     props.dispatch(
       appActions.widgetStatePropChange("widget_comms", "dataTable", dataTable)
+    );
+    props.dispatch(
+      appActions.widgetStatePropChange("widget_comms", "plotType", plotType)
+    );
+    props.dispatch(
+      appActions.widgetStatePropChange("widget_comms", "ancillary", ancillary)
     );
   }, [dataTable]);
 
@@ -91,95 +99,12 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
           acc[group.groupId] = acc[group.groupId] || [];
           const oids = group.polygons.map((polygon) => polygon.objectid);
           acc[group.groupId].push(...oids);
-
+          console.log(acc);
           return acc;
         }, {})
       );
     }
   }, [zoneSubsets]);
-  /*
-  function handleMapZoneClick(attributes) {
-    const newZone = {
-      label: attributes.name || attributes.zone_name,
-      value: attributes.zone_name,
-      objectid: attributes.objectid,
-    };
-    console.log(newZone);
-    console.log(zoneSubsetRef.current);
-    console.log(zoneSubsetRef.current.includes(newZone));
-    const isInArray = zoneSubsetRef.current.some(
-      (zone) =>
-        zone.label === newZone.label &&
-        zone.value === newZone.value &&
-        zone.objectid === newZone.objectid
-    );
-
-    console.log(isInArray);
-
-    if (isInArray) {
-      // Remove the object from the array
-      const updatedZoneSubset = zoneSubsetRef.current.filter(
-        (zone) =>
-          !(
-            zone.label === newZone.label &&
-            zone.value === newZone.value &&
-            zone.objectid === newZone.objectid
-          )
-      );
-      handleZoneSubsetClick(updatedZoneSubset);
-    } else {
-      // Add the object to the array
-      const updatedZoneSubset = [...zoneSubsetRef.current, newZone];
-      handleZoneSubsetClick(updatedZoneSubset);
-    }
-    //console.log(activeLayer);
-  }
-
-  React.useEffect(() => {
-    console.log("click handler triggered");
-    let clickHandler;
-    let onClick;
-    async function setupLayerView(jmv, activeLayer) {
-      console.log(jmv, activeLayer);
-      if (jmv && activeLayer) {
-        const layerView = await jmv.view.whenLayerView(activeLayer);
-
-        // Define the click event handler
-        clickHandler = async (evt) => {
-          const opts = {
-            include: activeLayer,
-          };
-
-          console.log(activeLayer);
-          console.log(layerView.highlightOptions);
-
-          const response = await jmv.view.hitTest(evt, opts);
-          console.log(response);
-
-          if (response.results.length > 0) {
-            const graphic = response.results[0].graphic;
-            console.log(graphic.attributes);
-            console.log(activeLayer.declaredClass);
-            handleMapZoneClick(graphic.attributes);
-            //layerView.highlight(graphic.attributes["objectid"]);
-          }
-        };
-
-        // Add click event listener to the view
-        onClick = jmv.view.on("click", clickHandler);
-        console.log(onClick);
-      }
-    }
-
-    setupLayerView(jmv, zone.dataset);
-    console.log(onClick);
-    // Cleanup function to remove the event listener
-    return () => {
-      if (clickHandler) {
-        onClick.remove();
-      }
-    };
-  }, [jmv, zone]); */
 
   function convertToUTC(timeEpoch) {
     var d = new Date(timeEpoch);
@@ -264,13 +189,9 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
           .map((id) => `'${id.value}'`)
           .join(", ");
         if (plotType == 0) {
-          //const query = `zone_name IN ('inn', 'ykf') AND variable = 'first_snow_day' AND stdtime >= date '2001-01-01' AND stdtime <= date '2020-01-01'`;
-          //zone_name IN "'Innoko, Kanuti, Yukon Flats'" AND
-          //const query = `zone_name IN (${zoneSubsetString}) AND variable = '${var1}' AND stdtime >= date '${yearValues.min}-01-01' AND stdtime <= date '${yearValues.max}-01-01'`;
           const query = `zone_name IN (${zoneSubsetString}) AND variable = '${var1}' AND stdtime >= date '${yearValues.min}-01-01' AND stdtime <= date '${yearValues.max}-01-01'`;
           console.log("setting query");
           tableQueries.push(query);
-          //setTableQuery([query]);
         } else if (plotType == 1) {
           const query1 = `zone_name IN (${zoneSubsetString}) AND variable = '${var1}' AND stdtime >= date '${yearValues.min}-01-01' AND stdtime <= date '${yearValues.max}-01-01'`;
           const query2 = `zone_name IN (${zoneSubsetString}) AND variable = '${
@@ -279,28 +200,35 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
             yearValues.min
           }-01-01' AND stdtime <= date '${yearValues.max}-01-01'`;
           tableQueries.push([query1, query2]);
-          //setTableQuery([query1, query2]);
         }
       }
-      console.log(tableQueries);
+      console.log("Table Queries Set:", tableQueries);
       setTableQuery(tableQueries);
-      //const zoneSubsetString = zoneSubset.map((zone) => zone.name);
     }
   }, [zone, dataSource, zoneSubsets, plotType, var1, var2, yearValues]);
 
   async function dispatchTable() {
-    async function loadTableStructure(table, queryString) {
+    async function loadTableStructure(table, queryString, index) {
       try {
         if (table.type === "feature") {
           await table.load();
-          console.log(table.fields.map((field) => field.name));
           const query = table.createQuery();
           query.returnDistinctValues = true;
+          query.maxRecordCountFactor = 5;
           query.where = queryString;
           console.log(queryString);
           const queryResults = await table.queryFeatures(query);
           console.log(queryResults);
-          //const csvString = convertFeaturesToCSV(queryResults.features);
+          if (
+            queryResults.features.length ==
+            2000 * query.maxRecordCountFactor
+          ) {
+            alert(
+              `Results for Group ${index + 1} may have exceeded query limits (${
+                2000 * query.maxRecordCountFactor
+              } table rows) and truncated data.\n Suggest limiting time range or geographic area of group.`
+            );
+          }
           return queryResults.features.map((feature) => feature.attributes);
         }
       } catch (error) {
@@ -308,57 +236,84 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
       }
     }
     if (plotType === 0) {
-      if (zone.dataset && dataSource.source && var1) {
+      if (
+        zone.dataset &&
+        dataSource.source &&
+        zoneSubsets[0].polygons.length &&
+        var1
+      ) {
         const table = zone.tables.filter((table) =>
           table.title.includes(dataSource.source.split(" ")[1])
         )[0];
         if (table) {
           const dataTableResults = await Promise.all(
-            tableQuery.map(async (query) => {
-              const dataTableResult = await loadTableStructure(table, query);
-              console.log(dataTableResult); // Log each result as it's loaded
-              return dataTableResult; // Return to populate dataTableResults
+            tableQuery.map(async (query, index) => {
+              const dataTableResult = await loadTableStructure(
+                table,
+                query,
+                index
+              );
+              return dataTableResult;
             })
           );
-          //console.log(dataTableResult);
           setDataTable([dataTableResults]);
-          const dataTableResult = await loadTableStructure(
-            table,
-            tableQuery[0]
-          );
-          console.log(dataTableResult);
-          setDataTable([dataTableResult]);
         } else {
           console.error("No matching table found.");
         }
       } else {
-        console.error("Required conditions are not met.");
+        alert("Required conditions are not met.");
       }
     }
     if (plotType === 1) {
-      if (zone.dataset && dataSource.source && var1 && var2) {
+      if (
+        zone.dataset &&
+        dataSource.source &&
+        zoneSubsets[0].polygons.length &&
+        var1 &&
+        var2
+      ) {
         const table1 = zone.tables.filter((table) =>
           table.title.includes(dataSource.source.split(" ")[1])
         )[0];
-        console.log(var2.split(":")[0]);
-        const table2 = zone.tables.filter((table) =>
-          table.title.includes(var2.split(":")[0].split(" ")[1])
-        )[0];
+        let table2;
+        if (var2.toLowerCase().includes("ancillary")) {
+          table2 = zone.tables.filter((table) =>
+            table.title.toLowerCase().includes("ancillary")
+          )[0];
+          setAncillary(true);
+        } else {
+          table2 = zone.tables.filter((table) =>
+            table.title.includes(var2.split(":")[0].split(" ")[1])
+          )[0];
+          setAncillary(false);
+        }
         if (table1 && table2) {
-          const dataTable1Result = await loadTableStructure(
-            table1,
-            tableQuery[0]
+          const dataTable1Results = await Promise.all(
+            tableQuery.map(async (query, index) => {
+              const dataTable1Result = await loadTableStructure(
+                table1,
+                query[0],
+                index
+              );
+              return dataTable1Result;
+            })
           );
-          const dataTable2Result = await loadTableStructure(
-            table2,
-            tableQuery[1]
+          const dataTable2Results = await Promise.all(
+            tableQuery.map(async (query, index) => {
+              const dataTable2Result = await loadTableStructure(
+                table2,
+                query[1],
+                index
+              );
+              return dataTable2Result;
+            })
           );
-          setDataTable([dataTable1Result, dataTable2Result]);
+          setDataTable([dataTable1Results, dataTable2Results]);
         } else {
           console.error("Error fetching table(s).");
         }
       } else {
-        console.error("Required conditions are not met.");
+        alert("Required conditions are not met.");
       }
     }
   }
@@ -370,7 +325,14 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
     }
     if (zone.dataset) {
       zone.dataset.visible = false;
+      setZoneSubsets([
+        {
+          groupId: 1,
+          polygons: [],
+        },
+      ]);
     }
+    console.log(layerItem);
 
     let polygonItems: { label: string; value: string; objectid: number }[];
     console.log("querying zone tables");
@@ -400,11 +362,7 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
             });
         });
     };
-    //query.outFields = ["name, zone_name, objectid"];
 
-    //layerItem
-    //  .queryFeatures(query)
-    //  .then(function (results) {
     tryQuery(query)
       .then((results) => {
         console.log(results);
@@ -433,9 +391,6 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
             polygons: polygonItems,
           });
           console.log(polygonItems);
-          /*           setZoneSubset(
-            polygonItems.filter((poly) => poly.value !== "select_all")
-          ); */
         } else {
           setZone({
             dataset: layerItem,
@@ -445,7 +400,6 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
             ),
             polygons: [],
           });
-          /*           setZoneSubset([]); */
         }
       })
       .catch((error) => {
@@ -454,14 +408,79 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
     layerItem.visible = true;
     layerItem.outFields = ["*"];
   }
-  const highlightedRef = React.useRef(null);
-  const highlightZones = async (zone_name) => {
-    console.log(zone_name);
-    //const OIDSubsetString = zone_name.map((id) => `${id}`).join(", ");
+
+  const highlightZones = async (zone_oids) => {
+    console.log("Highlight function triggered");
+    const updateGroupLayer = async (groupId, polygons) => {
+      loadArcGISJSAPIModules([
+        "esri/layers/GraphicsLayer",
+        "esri/Graphic",
+      ]).then(async ([GraphicsLayer, Graphic]) => {
+        let newGraphicsLayers = { ...graphicsLayers };
+        let groupLayer = newGraphicsLayers[groupId];
+        if (!groupLayer) {
+          console.log(`Adding group layer: ${groupId}`);
+          groupLayer = new GraphicsLayer({
+            title: `New Group ${groupId}`,
+            id: `groupLayer-${groupId}`,
+          });
+          jmv.view.map.add(groupLayer);
+          newGraphicsLayers[groupId] = groupLayer;
+        }
+        graphicsLayers[groupId.toString()] = groupLayer;
+
+        const color = getColorByGroupId(parseInt(groupId, 10));
+        const graphics = await Promise.all(
+          polygons.map((polygon) => {
+            return new Graphic({
+              geometry: polygon.geom,
+              symbol: {
+                type: "simple-fill",
+                color: color,
+                style: "solid",
+                outline: {
+                  color: [255, 255, 255],
+                  width: 0,
+                },
+              },
+              attributes: { oid: polygon.oid },
+            });
+          })
+        );
+
+        groupLayer.removeAll();
+        groupLayer.addMany(graphics);
+        console.log("setting:", newGraphicsLayers);
+        setGraphicsLayers(newGraphicsLayers);
+      });
+    };
+
+    const removeGroupLayer = (groupId) => {
+      const groupLayer = graphicsLayers[groupId];
+      if (groupLayer) {
+        jmv.view.map.remove(groupLayer);
+        delete graphicsLayers[groupId];
+      }
+    };
+
+    function getColorByGroupId(groupId) {
+      switch (groupId) {
+        case 1:
+          return [255, 0, 0, 0.4];
+        case 2:
+          return [0, 255, 0, 0.4];
+        case 3:
+          return [0, 0, 255, 0.4];
+        default:
+          return [255, 255, 0, 0.4];
+      }
+    }
+
+    console.log(zone_oids);
     let OIDSubsetString;
-    console.log(OIDSubsetString);
 
     async function fetchGeometries(layer, oidString) {
+      console.log(oidString);
       const layerView = await jmv.view.whenLayerView(layer);
       const query = {
         where: `objectid IN (${oidString})`,
@@ -469,7 +488,6 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
         returnGeometry: true,
       };
       const results = await layerView.layer.queryFeatures(query);
-      console.log(results);
       return results.features.map((feat) => ({
         oid: feat.attributes.objectid,
         geom: feat.geometry,
@@ -479,114 +497,46 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
       const geometriesByGroupId = {};
 
       await Promise.all(
-        Object.keys(zone_name).map(async (group) => {
-          const OIDSubsetString = zone_name[group]
-            .map((id) => `${id}`)
-            .join(", ");
-          const geometries = await fetchGeometries(
-            zone.dataset,
-            OIDSubsetString
-          );
-
-          // Ensure the group ID is a number or convert it appropriately
+        Object.keys(zone_oids).map(async (group) => {
+          OIDSubsetString = zone_oids[group].map((id) => `${id}`).join(", ");
+          console.log(OIDSubsetString);
+          let geometries;
+          if (!OIDSubsetString) {
+            geometries = {};
+          } else {
+            geometries = await fetchGeometries(zone.dataset, OIDSubsetString);
+          }
+          console.log(geometries);
           const groupId = parseInt(group, 10);
-
-          // Initialize the array if it doesn't exist
           if (!geometriesByGroupId[groupId]) {
             geometriesByGroupId[groupId] = [];
           }
-
-          // Push the fetched geometries into the respective group array
-          geometriesByGroupId[groupId].push(...geometries);
+          console.log(geometries.length);
+          geometries.length && geometriesByGroupId[groupId].push(...geometries);
         })
       );
 
-      return geometriesByGroupId; // This will log the dictionary with group IDs and their corresponding geometries
+      return geometriesByGroupId;
     };
 
-    // Call the function to execute
-    //fetchGeometriesForGroups();
-
-    // Call the function to execute
     const geoms = await fetchGeometriesForGroups();
-
     console.log(geoms);
-
-    function getColorByGroupId(groupId) {
-      // Assign colors based on groupId; this is just an example
-      switch (groupId) {
-        case 1:
-          return [255, 0, 0, 1]; // Red
-        case 2:
-          return [0, 255, 0, 1]; // Green
-        case 3:
-          return [0, 0, 255, 1]; // Blue
-        default:
-          return [255, 255, 0, 1]; // Default yellow
+    console.log(graphicsLayers);
+    for (const groupId of Object.keys(geoms)) {
+      console.log(groupId);
+      console.log(geoms[groupId]);
+      console.log(graphicsLayers);
+      if (geoms[groupId].length > 0) {
+        await updateGroupLayer(groupId, geoms[groupId]);
+      } else {
+        removeGroupLayer(groupId);
       }
     }
-
-    loadArcGISJSAPIModules(["esri/layers/GraphicsLayer", "esri/Graphic"]).then(
-      async ([GraphicsLayer, Graphic]) => {
-        // Ensure the function is async for await
-        // Iterate over each group in geoms
-        for (const groupId of Object.keys(geoms)) {
-          const color = getColorByGroupId(parseInt(groupId, 10)); // Get color for the current group
-
-          const groupLayer = new GraphicsLayer({
-            title: `Group ${groupId}`,
-            id: `groupLayer-${groupId}`,
-          });
-          jmv.view.map.add(groupLayer);
-
-          // Create graphics for each polygon in the group
-          const graphics = await Promise.all(
-            geoms[groupId].map((polygon) => {
-              return new Graphic({
-                geometry: polygon.geom, // Use the geometry from the polygon object
-                symbol: {
-                  type: "simple-fill",
-                  color: color,
-                  style: "solid",
-                  outline: {
-                    color: [255, 255, 255],
-                    width: 1,
-                  },
-                },
-                attributes: { oid: polygon.oid }, // Store the oid in attributes
-              });
-            })
-          );
-
-          // Add graphics to the group's GraphicsLayer
-          groupLayer.addMany(graphics);
-        }
+    for (const groupId of Object.keys(graphicsLayers)) {
+      if (!Object.keys(geoms).includes(groupId)) {
+        removeGroupLayer(groupId);
       }
-    );
-
-    //console.log(zone_name);
-    //layerView.highlightOptions = {
-    //  color: getColorByGroupId(zone_name[0].groupId),
-    //};
-
-    //console.log(zone.polygons);
-    //const objectIds = zone.polygons
-    //  .filter(
-    //    (poly) => zone_name.includes(poly.value) && poly.value !== "select_all"
-    //  )
-    //  .map((poly) => poly.objectid);
-
-    //console.log(highlightedRef);
-    //console.log(zone_name.map((polygon) => polygon.oid));
-    //console.log(zoneSubsets);
-    //if (highlightedRef.current) {
-    //  highlightedRef.current.remove();
-    //}
-    //highlightedRef.current = layerView.highlight(
-    //  zone_name.map((polygon) => polygon.oid)
-    //);
-
-    //console.log(highlightedRef);
+    }
   };
   function handleZoneSubsetClick(allItems, group_id) {
     console.log(allItems);
@@ -598,9 +548,7 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
     console.log(zoneSubsets);
     setZoneSubsets((prevGroups) =>
       prevGroups.map((group) =>
-        group.groupId === group_id
-          ? { ...group, polygons: newPolys } // Add newPolygon to the existing polygons
-          : group
+        group.groupId === group_id ? { ...group, polygons: newPolys } : group
       )
     );
   }
@@ -624,10 +572,43 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
     //    jmv.view.map.add(imageryLayer);
     //  }
     //);
-    setvar2Options(props.config.AllowedCombinations[variable].asMutable());
+    setVar2Options(props.config.AllowedCombinations[variable].asMutable());
     //var2 && setVar2("");
     //var2 && console.log(var2);
   }
+
+  React.useEffect(() => {
+    if (zone && var1) {
+      const allowedCombs = props.config.AllowedCombinations[var1].asMutable();
+      const ancillaryTable = zone.tables.filter((table) =>
+        table.title.includes("Ancillary")
+      );
+      if (ancillaryTable.length === 1) {
+        const query = ancillaryTable[0].createQuery();
+        query.returnGeometry = false;
+
+        const tryQuery = (query) => {
+          query.outFields = ["variable"];
+          return ancillaryTable[0]
+            .queryFeatures(query)
+            .then(function (results) {
+              return results;
+            });
+        };
+        tryQuery(query).then((results) => {
+          const uniqueValues = [
+            ...new Set(
+              results.features.map((feature) => feature.attributes.variable)
+            ),
+          ];
+          setVar2Options({
+            ...allowedCombs,
+            ...{ "Ancillary Data": uniqueValues },
+          });
+        });
+      }
+    }
+  }, [zone, var1]);
 
   React.useEffect(() => {
     if (dataSource.source) {
@@ -701,83 +682,21 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
         </DropdownButton>
         <DropdownMenu>
           <ZoneDropdown
-            zones={jmv?.view.map.layers.items}
+            zones={initialZones}
             handleZoneClick={handleZoneClick}
           />
         </DropdownMenu>
       </Dropdown>
 
-      {/*       <DrawTool
-        jmv={jmv}
-        activeLayer={zone.dataset}
-        handleDraw={handleZoneSubsetClick}
-        theme={props.theme}
-      ></DrawTool> */}
-
       <h4>Zone Selection</h4>
-      {!zone.dataset ? (
-        <Dropdown className="dropdown">
-          <DropdownButton disabled={true}>Select Zone Dataset</DropdownButton>
-        </Dropdown>
-      ) : zone.polygons.length > 0 ? (
-        <>
-          {zoneSubsets.map((group) => {
-            return (
-              <div>
-                <p>Group {group.groupId}</p>
-                <ZoneSubsetSelect
-                  group={group.groupId}
-                  polygons={zone.polygons}
-                  selectedZones={group.polygons}
-                  handleZoneSubsetClick={handleZoneSubsetClick}
-                  jmv={jmv}
-                  activeLayer={zone.dataset}
-                  theme={props.theme}
-                />
-              </div>
-            );
-          })}
-          <div style={{ display: "flex", fontSize: "2px" }}>
-            <Button
-              onClick={() => {
-                setZoneSubsets((prevGroups) => [
-                  ...prevGroups,
-                  { groupId: prevGroups.length + 1, polygons: [] },
-                ]);
-              }}
-            >
-              Add Group
-            </Button>
-            <Button
-              disabled={zoneSubsets.length < 2}
-              onClick={() => {
-                const newGroup = zoneSubsets.length;
-                console.log(newGroup);
-                setZoneSubsets((prevGroups) =>
-                  prevGroups.filter((group) => group.groupId !== newGroup)
-                );
-              }}
-            >
-              Delete Group
-            </Button>
-          </div>
-        </>
-      ) : (
-        zoneSubsets.map((group) => {
-          return (
-            <>
-              <p>Group {group.groupId}</p>
-              <ZoneSubsetGeo
-                jmv={jmv}
-                activeLayer={zone.dataset}
-                handleDraw={handleZoneSubsetClick}
-                theme={props.theme}
-                group_id={group.groupId}
-              />
-            </>
-          );
-        })
-      )}
+      <ZoneSelection
+        zone={zone}
+        zoneSubsets={zoneSubsets}
+        handleZoneSubsetClick={handleZoneSubsetClick}
+        jmv={jmv}
+        theme={props.theme}
+        setZoneSubsets={setZoneSubsets}
+      ></ZoneSelection>
 
       <h3>Primary Data Source</h3>
       <Dropdown className="dropdown">
@@ -849,6 +768,7 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
       {yearRange && (
         <div>
           <YearSlider
+            disabled={!dataSource.source}
             min={Math.min(...yearRange)}
             max={Math.max(...yearRange)}
             step={1}

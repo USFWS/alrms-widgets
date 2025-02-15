@@ -90,7 +90,7 @@ export default function ZoneSubsetSelect({
 
   // The AdvancedSelect component is rendered with the provided props.
   return (
-    <div style={{ display: "flex", width: "90%" }}>
+    <div style={{ display: "flex", width: "90%", paddingBottom: "16px" }}>
       <AdvancedSelect
         key={key}
         staticValues={polygons}

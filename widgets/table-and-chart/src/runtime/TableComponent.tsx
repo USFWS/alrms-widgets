@@ -1,7 +1,7 @@
 import React from "react";
 import Plot from "react-plotly.js";
 
-export default function DataTableComponent({ values }) {
+export default function TableComponent({ values }) {
   console.log(values);
   if (!values) {
     return <div>No data available</div>;

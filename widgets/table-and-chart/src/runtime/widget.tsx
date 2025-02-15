@@ -2,6 +2,7 @@ import { React, type AllWidgetProps } from "jimu-core";
 import { type IMConfig } from "../config";
 import PlotlyChart from "./PlotlyChart";
 import "./style.css";
+import PlotlyChartRefactor from "./PlotlyChartRefactor";
 //import { MutableStoreManager } from "jimu-core";
 
 import { ReactRedux } from "jimu-core";
@@ -26,7 +27,12 @@ const Widget = (props: AllWidgetProps<IMConfig>) => {
 
   return (
     <div className="root-container">
-      <PlotlyChart dataTable={widgetState && widgetState.dataTable} />
+      <PlotlyChartRefactor
+        dataTable={widgetState && widgetState.dataTable}
+        plotType={widgetState && widgetState.plotType}
+        ancillary={widgetState && widgetState.ancillary}
+      ></PlotlyChartRefactor>
+      {/* <PlotlyChartRefactor dataTable={widgetState && widgetState.dataTable} /> */}
     </div>
   );
 };
