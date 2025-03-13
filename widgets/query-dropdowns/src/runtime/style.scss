@@ -1,0 +1,155 @@
+$thumb-size: 16px;
+
+@mixin track-styles {
+  appearance: none;
+  background: transparent;
+  border: transparent;
+}
+
+@mixin thumb-styles {
+  appearance: none;
+  pointer-events: all;
+  width: $thumb-size;
+  height: $thumb-size;
+  border-radius: 0px;
+  border: 0 none;
+  cursor: grab;
+  /* background-color: red; */
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+#root {
+  max-width: 500px;
+  padding: 12px;
+  margin: auto;
+}
+
+h4 {
+  color: var(--dark);
+  font-size: 1.25em;
+}
+
+.dropdown {
+  min-width: 100px;
+  max-width: 200px;
+  width: 90%;
+  padding-bottom: 0px;
+}
+
+.render-container {
+  height: 100%;
+  overflow: auto;
+  overflow-y:auto;
+  overflow-x: auto;
+  padding: 16px 16px 15% 16px;
+}
+
+.wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin: 1rem calc(#{$thumb-size} / 1);
+  /* padding-top: 1.6rem; */
+  height: calc(#{$thumb-size} + 1.6rem);
+  max-width: 200px;
+  min-width: 32px;
+}
+
+.input-wrapper {
+  width: calc(100% + #{$thumb-size});
+  /* margin: 0 calc(#{$thumb-size} / -2); */
+  /* margin: 1.6rem 0; */
+  position: absolute;
+  height: $thumb-size;
+}
+
+.control-wrapper {
+  width: 90%;
+  position: absolute;
+  height: $thumb-size;
+}
+
+.input {
+  position: absolute;
+  width: 90%;
+  pointer-events: none;
+  appearance: none;
+  height: 100%;
+  opacity: 0;
+  z-index: 3;
+  padding: 0;
+
+  .group-buttons {
+    display: flex;
+    padding-bottom: 8px;
+  }
+
+  &::-ms-track {
+    @include track-styles;
+  }
+
+  &::-moz-range-track {
+    @include track-styles;
+  }
+
+  &:focus::-webkit-slider-runnable-track {
+    @include track-styles;
+  }
+
+  &::-ms-thumb {
+    @include thumb-styles;
+  }
+
+  &::-moz-range-thumb {
+    @include thumb-styles;
+  }
+
+  &::-webkit-slider-thumb {
+    @include thumb-styles;
+  }
+};
+
+.control-label {
+  position: absolute;
+  top: 100%; /* Position below the control */
+  transform: translateX(-50%); /* Center horizontally */
+  white-space: nowrap; /* Prevent line breaks */
+}
+
+.rail {
+  position: absolute;
+  width: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 6px;
+  border-radius: 3px;
+  background: var(--secondary);
+}
+
+.inner-rail {
+  position: absolute;
+  height: 100%;
+  background: darkgray;
+  opacity: 0.5;
+}
+
+.control {
+  width: $thumb-size;
+  height: $thumb-size;
+  border-radius: 50%;
+  position: absolute;
+  background: var(--white);
+  border-style: solid;
+  border-color: var(--primary);
+  top: 50%;
+  margin-left: calc(#{$thumb-size} / -2);
+  transform: translate3d(0, -50%, 0);
+  z-index: 2;
+}
+
+.drawTool {
+  display: flex;
+}
