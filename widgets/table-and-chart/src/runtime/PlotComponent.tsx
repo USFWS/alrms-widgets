@@ -63,6 +63,7 @@ export default function PlotComponent({
           },
           autosize: true,
           margin: { l: 60, r: 40, t: 50, b: 50 },
+          showlegend: true,
         }}
         style={{ width: "100%", height: "100%" }}
         useResizeHandler={true}
