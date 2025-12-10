@@ -137,6 +137,8 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
       onZoneUpdate: setZone,
       onZoneSubsetsReset: () => setZoneSubsets([{ groupId: 1, polygons: [] }]),
     });
+    // Reset secondary variable when zone changes, as it may not be valid for new dataset
+    setVar2("");
   }
 
 
