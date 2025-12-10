@@ -94,7 +94,7 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
   useVar2Options(zone, var1, props, setVar2Options);
   useVar2Reset(dataSource, var1, setVar2);
   useVar1Validation(dataSource, var1, props.config, setVar1);
-  
+
   // Imagery implementation placeholder
   //const imageryLayer = useImageryLayer(jmv, dataSource.source, var1, props.config, (error) => {
   //  setWarning("Failed to load imagery layer. The service may be unavailable.");
@@ -225,7 +225,7 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
         />
       )}
       
-      <h3>Area of Interest</h3>
+      <h3>Polygon Dataset</h3>
 
       <Dropdown className="dropdown">
         <DropdownButton>
@@ -279,7 +279,7 @@ export default function Widget(props: AllWidgetProps<IMConfig>) {
         </DropdownMenu>
       </Dropdown>
 
-      <h4>Secondary Variable </h4>
+      <h4>Secondary Variable</h4>
 
       <Dropdown className="dropdown">
         <DropdownButton disabled={plotType !== PlotType.SCATTER || !dataSource.source || !var1}>
