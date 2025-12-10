@@ -2,6 +2,7 @@ import { type ImmutableObject } from "seamless-immutable";
 
 export interface DataSourceConfig {
   variables: string[];
+  imageryUrl?: string;
 }
 
 export interface AllowedCombinationsConfig {

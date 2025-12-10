@@ -1,5 +1,8 @@
+/** @jsx jsx */
 import React, { useEffect, useRef } from "react";
+import { jsx } from "jimu-core";
 import { loadArcGISJSAPIModules } from "jimu-arcgis";
+import { getDrawToolStyle } from "./style";
 
 const SketchWidget = ({ jmv, activeLayer, handleDraw, theme, group_id }) => {
   const sketchRef = useRef(null);
@@ -152,7 +155,7 @@ const SketchWidget = ({ jmv, activeLayer, handleDraw, theme, group_id }) => {
   };
 
   return (
-    <div className="drawTool" ref={sketchRef}>
+    <div css={getDrawToolStyle(theme)} className="drawTool" ref={sketchRef}>
       <button
         className="esri-widget--button esri-icon-polygon"
         onClick={handleDrawPolygon}

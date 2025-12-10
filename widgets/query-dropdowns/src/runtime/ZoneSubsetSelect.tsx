@@ -23,9 +23,6 @@ export default function ZoneSubsetSelect({
   // The key is used to force a re-render when the polygons change.
   const [key, setKey] = useState(Date.now());
 
-  console.log(polygons);
-  console.log(selectedZones);
-
   // When the polygons change, the key is updated to trigger a re-render.
   useEffect(() => {
     setKey(Date.now());
@@ -37,7 +34,6 @@ export default function ZoneSubsetSelect({
    * @param {Array} selections - The selected items.
    */
   function handleClick(selections) {
-    console.log(selections);
     if (selections) {
       selections = selections.map((item) => {
         const match = polygons.find((refItem) => refItem.value == item.value);
@@ -55,8 +51,10 @@ export default function ZoneSubsetSelect({
     }
     // If "select_all" is selected, all polygons are passed to the callback.
     else if (selections.some((items) => items.value == "select_all")) {
-      console.log("selecting all");
-      handleZoneSubsetClick(polygons, group);
+      const allPolygonsExceptSelectAll = polygons.filter(
+        (poly) => poly.value !== "select_all"
+      );
+      handleZoneSubsetClick(allPolygonsExceptSelectAll, group);
     }
     // If other items are selected, they are passed to the callback.
     else if (selections.length) {
@@ -100,7 +98,7 @@ export default function ZoneSubsetSelect({
         isMultiple={true}
         hideBottomTools={false}
         hideSearchInput={false}
-        sortValuesByLabel={false}
+        sortValuesByLabel={true}
         customDropdownButtonContent={customDropdownButtonContent}
       />
       <DrawTool

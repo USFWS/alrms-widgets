@@ -6,6 +6,8 @@ ArcGIS Experience Builder widgets for ALRMS program on USFWS GeoPortal
 
 20250313: Major updates to widget functionality for query and comparison options & associated plotting
 
+20251212: Refactor and iterative improvements to both widgets
+
 # Contributors
 - Owen Larson (ojlarson-usfws)
 - Samuel Weissman (sweissman-usfws)
