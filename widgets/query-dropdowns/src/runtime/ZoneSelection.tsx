@@ -85,8 +85,7 @@ export default function ZoneSelection({
           checked={multGroups} 
           onChange={handleCheckbox}
           disabled={isGeoSelector}
-        /> Compare
-        Groups
+        /> Group Zones
       </Label>
       <br></br>
 
