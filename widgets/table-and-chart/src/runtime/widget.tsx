@@ -3,6 +3,8 @@ import { type IMConfig } from "../config";
 import PlotlyChart from "./PlotlyChart";
 import "./style.css";
 import PlotlyChartRefactor from "./PlotlyChartRefactor";
+import { DataItem } from "./utils/dataProcessing";
+import { PlotType } from "./constants";
 //import { MutableStoreManager } from "jimu-core";
 
 import { ReactRedux } from "jimu-core";
@@ -10,11 +12,16 @@ import { ReactRedux } from "jimu-core";
 //const { useEffect } = React;
 const { useSelector } = ReactRedux;
 
+interface WidgetCommsState {
+  dataTable?: DataItem[][][];
+  plotType?: PlotType;
+  ancillary?: boolean;
+  multGroups?: boolean;
+}
+
 interface AppState {
   widgetsState: {
-    widget_comms: {
-      [key: string]: any[];
-    };
+    widget_comms: WidgetCommsState;
   };
 }
 
@@ -28,9 +35,10 @@ const Widget = (props: AllWidgetProps<IMConfig>) => {
   return (
     <div className="root-container">
       <PlotlyChartRefactor
-        dataTable={widgetState && widgetState.dataTable}
-        plotType={widgetState && widgetState.plotType}
-        ancillary={widgetState && widgetState.ancillary}
+        dataTable={widgetState?.dataTable}
+        plotType={widgetState?.plotType}
+        ancillary={widgetState?.ancillary}
+        multGroups={widgetState?.multGroups}
       ></PlotlyChartRefactor>
       {/* <PlotlyChartRefactor dataTable={widgetState && widgetState.dataTable} /> */}
     </div>

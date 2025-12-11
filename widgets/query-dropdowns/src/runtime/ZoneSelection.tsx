@@ -1,8 +1,25 @@
+/** @jsx jsx */
+/** @jsxFrag React.Fragment */
 import React from "react";
+import { jsx } from "jimu-core";
 import { Dropdown, DropdownButton, Button, Label, Checkbox } from "jimu-ui";
+import { JimuMapView } from "jimu-arcgis";
+import { IMThemeVariables } from "jimu-core";
 import ZoneSubsetSelect from "./ZoneSubsetSelect";
 import ZoneSubsetGeo from "./ZoneSubsetGeo";
-import "./style.scss";
+import type { Zone, ZoneSubset } from "./types";
+import { getZoneSelectionStyle } from "./style";
+
+interface ZoneSelectionProps {
+  zone: Zone;
+  zoneSubsets: ZoneSubset[];
+  handleZoneSubsetClick: (allItems: any, group_id: any) => void;
+  jmv: JimuMapView;
+  theme: IMThemeVariables;
+  setZoneSubsets: React.Dispatch<React.SetStateAction<ZoneSubset[]>>;
+  multGroups: boolean;
+  setMultGroups: React.Dispatch<React.SetStateAction<boolean>>;
+}
 
 export default function ZoneSelection({
   zone,
@@ -11,8 +28,9 @@ export default function ZoneSelection({
   jmv,
   theme,
   setZoneSubsets,
-}) {
-  const [multGroups, setMultGroups] = React.useState(false);
+  multGroups,
+  setMultGroups,
+}: ZoneSelectionProps) {
 
   const handleAddGroup = () => {
     setZoneSubsets((prevGroups) => [
@@ -44,18 +62,30 @@ export default function ZoneSelection({
   );
 
   const handleCheckbox = (event) => {
-    console.log("clicked checkbox", event.target.checked);
     setMultGroups(event.target.checked);
     setZoneSubsets((prevGroups) =>
       prevGroups.filter((group) => group.groupId === 1)
     );
   };
 
+  // Determine if we're using the geo selector (drawing tool)
+  const isGeoSelector = zone.dataset && zone.polygons.length === 0;
+
+  // Force multGroups to true when using geo selector
+  React.useEffect(() => {
+    if (isGeoSelector && !multGroups) {
+      setMultGroups(true);
+    }
+  }, [isGeoSelector, multGroups, setMultGroups]);
+
   return (
-    <>
+    <div css={getZoneSelectionStyle(theme)}>
       <Label>
-        <Checkbox checked={multGroups} onChange={handleCheckbox} /> Compare
-        Groups
+        <Checkbox 
+          checked={multGroups} 
+          onChange={handleCheckbox}
+          disabled={isGeoSelector}
+        /> Group Zones
       </Label>
       <br></br>
 
@@ -103,6 +133,6 @@ export default function ZoneSelection({
           {multGroups && <GroupButtons />}
         </>
       )}
-    </>
+    </div>
   );
 }

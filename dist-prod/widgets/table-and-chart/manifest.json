@@ -5,7 +5,7 @@
   "version": "1.12.0",
   "exbVersion": "1.12.0",
   "author": "Geographic Information Network of Alaska",
-  "description": "Creates tables and charts when passed data from the query-dropdowns custom widget",
+  "description": "Visualizes pre-processed datasets given parameters set in query-dropdowns widget for the FWS ALRMS Web Application.",
   "copyright": "Geographic Information Network of Alaska",
   "license": "http://www.apache.org/licenses/LICENSE-2.0",
   "properties": {},

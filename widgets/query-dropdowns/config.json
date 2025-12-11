@@ -8,7 +8,8 @@
       ]
     },
     "MODIS Snow": {
-      "variables": ["first_snow_day", "last_snow_day"]
+      "variables": ["first_snow_day", "last_snow_day"],
+      "imageryUrl": "https://gis.fws.gov/image/rest/services/ALRMS/MODIS_Snow/ImageServer"
     }
   },
   "AllowedCombinations": {

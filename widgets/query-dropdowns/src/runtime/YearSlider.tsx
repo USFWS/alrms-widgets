@@ -1,5 +1,7 @@
+/** @jsx jsx */
 import React from "react";
-import "./style.scss";
+import { jsx } from "jimu-core";
+import { getYearSliderStyle } from "./style";
 
 export default function YearSlider({
   min,
@@ -10,7 +12,6 @@ export default function YearSlider({
   theme,
   disabled,
 }) {
-  //const theme = props.theme;
   const [minValue, setMinValue] = React.useState(value ? value.min : min);
   const [maxValue, setMaxValue] = React.useState(value ? value.max : max);
 
@@ -38,22 +39,10 @@ export default function YearSlider({
   const minPos = ((minValue - min) / (max - min)) * 100;
   const maxPos = ((maxValue - min) / (max - min)) * 100;
 
-  const setCSSVariables = (theme) => {
-    const colors = theme.colors;
-    const variables = {};
-
-    for (const [key, value] of Object.entries(colors)) {
-      variables[`--${key}`] = value;
-    }
-
-    return variables;
-  };
-
-  const style = setCSSVariables(theme);
-
   return (
-    <div className="wrapper">
-      <div className="input-wrapper">
+    <div css={getYearSliderStyle(theme)}>
+      <div className="wrapper">
+        <div className="input-wrapper">
         <input
           disabled={disabled}
           className="input"
@@ -76,7 +65,7 @@ export default function YearSlider({
         />
       </div>
 
-      <div className="control-wrapper" style={style}>
+      <div className="control-wrapper">
         <div className="control" style={{ left: `${minPos}%` }} />
         <div className="control-label" style={{ left: `${minPos}%` }}>
           {minValue}
@@ -91,6 +80,7 @@ export default function YearSlider({
         <div className="control-label" style={{ left: `${maxPos}%` }}>
           {maxValue}
         </div>
+      </div>
       </div>
     </div>
   );

@@ -1,9 +1,12 @@
 import React from "react";
 import Plot from "react-plotly.js";
 
-export default function TableComponent({ values }) {
-  console.log(values);
-  if (!values) {
+interface TableComponentProps {
+  values: any[];
+}
+
+export default function TableComponent({ values }: TableComponentProps) {
+  if (!values || values.length === 0) {
     return <div>No data available</div>;
   }
   return (
